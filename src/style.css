@@ -1,0 +1,107 @@
+:root {
+  --primary-color: #3498db;
+  --secondary-color: #2ecc71;
+  --background-color: #ecf0f1;
+  --sidebar-bg: #ffffff;
+  --text-color: #34495e;
+  --border-color: #bdc3c7;
+  --hover-bg: #f7f9f9;
+  --selected-bg: #e8f4fd;
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  
+  /* 响应式断点 */
+  --mobile-breakpoint: 768px;
+  --tablet-breakpoint: 1024px;
+  
+  /* 移动端适配变量 */
+  --sidebar-width-mobile: 280px;
+  --header-height-mobile: 60px;
+  --touch-target-size: 44px;
+  
+  /* 通用间距 */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  
+  /* 边框圆角 */
+  --border-radius-sm: 4px;
+  --border-radius-md: 6px;
+  --border-radius-lg: 8px;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+}
+
+html, body, #app {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overflow-x: hidden;
+  font-family: var(--font-family);
+  background-color: var(--background-color);
+  color: var(--text-color);
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* 移动端视口设置 */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font-family: var(--font-family);
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  transition: all 0.25s;
+  /* 移动端触摸优化 */
+  min-height: var(--touch-target-size);
+  min-width: var(--touch-target-size);
+}
+
+/* 移动端媒体查询 */
+@media (max-width: var(--mobile-breakpoint)) {
+  html, body, #app {
+    overflow-x: hidden;
+    max-width: 100vw;
+    width: 100vw;
+  }
+  
+  * {
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+  
+  button {
+    padding: 0.8em 1.4em;
+    font-size: 1.1em;
+  }
+}
+
+/* 平板端媒体查询 */
+@media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
+  button {
+    padding: 0.7em 1.3em;
+  }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+  button:hover {
+    /* 移除hover效果，避免在触摸设备上的粘滞问题 */
+    background-color: initial;
+  }
+  
+  button:active {
+    transform: scale(0.98);
+  }
+}
