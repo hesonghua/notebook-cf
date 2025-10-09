@@ -70,15 +70,33 @@ const extension = {
     {
       name: 'blockMath',
       level: 'block',
-      start(src) { return src.indexOf('$$'); },
+      start(src) { 
+        const markers = ['$$', '\\['];
+        const indices = markers
+          .map(marker => src.indexOf(marker))
+          .filter(index => index !== -1);
+
+        if (indices.length === 0) {
+          return;
+        }
+
+        return Math.min(...indices);
+      },
       tokenizer(src) {
-        const match = src.match(/^\$\$([^$]+?)\$\$/);
-        if (match) {
-          return {
-            type: 'blockMath',
-            raw: match[0],
-            text: match[1].trim(),
-          };
+        const matches = [
+          /^\$\$([^$]+?)\$\$/,
+          /^\\\[([^$]+?)\\\]/
+        ];
+
+        for (let i = 0; i < matches.length; i++) {
+          const match = src.match(matches[i]);
+          if (match) {
+            return {
+              type: 'blockMath',
+              raw: match[0],
+              text: match[1].trim(),
+            };
+          }
         }
       },
       renderer(token) {
@@ -103,7 +121,7 @@ const extension = {
       tokenizer(src) {
         const matches = [
           /^\$([^$]+?)\$/,
-          /^\\\(([^$]+?)\\\)/
+          /^\\\((.+?)\\\)/
         ];
 
         for (let i = 0; i < matches.length; i++) {
