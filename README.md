@@ -49,8 +49,6 @@ npx wrangler d1 create <YOUR_DATABASE_NAME>
 
 **5. Configure `wrangler.jsonc`**
 
-Copy `wrangler.jsonc.example` to `wrangler.jsonc` and fill in your database details. The `wrangler.jsonc` file is ignored by Git, so your credentials will not be committed.
-
 ```json
 // wrangler.jsonc
 {
@@ -61,14 +59,22 @@ Copy `wrangler.jsonc.example` to `wrangler.jsonc` and fill in your database deta
 	"assets": {
 		"not_found_handling": "single-page-application"
 	},
+	"observability": {
+		"enabled": true
+	},
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "<YOUR_DATABASE_NAME>",
-			"database_id": "<YOUR_DATABASE_ID>",
+			"database_name": "notebook-db",
+			"database_id": "7e29a982-21c1-4f87-be73-87afd1c6ce65",
 			"migrations_dir": "./migrations"
 		}
-	]
+	],
+	"vars": {
+		"DATABASE_NAME": "notebook-db",
+		"TURNSTILE_SITE_KEY": "your turnsitile site key, ignore if TURNSTILE_ENABLED=false",
+		"TURNSTILE_ENABLED": "true"
+	}
 }
 ```
 
@@ -87,6 +93,19 @@ Deploy the application to your Cloudflare account:
 ```bash
 npm run deploy
 ```
+
+**8. Configure Environment Variables**
+
+After deploying, you need to configure the following environment variables in your Cloudflare dashboard (Workers & Pages -> Your Application -> Settings -> Variables):
+
+| Type      | Name                 | Value                    |
+|-----------|----------------------|--------------------------|
+| Text      | `DATABASE_NAME`      | `notebook-db`            |
+| Secret    | `JWT_SECRET`         | (Generate a secure secret) |
+| Text      | `TURNSTILE_ENABLED`  | `true`                   |
+| Secret    | `TURNSTILE_SECRET_KEY` | (Your Turnstile secret key) |
+| Text      | `TURNSTILE_SITE_KEY` | (Your Turnstile site key) |
+- if you set TURNSTILE_ENABLED to false, then may ignore TURNSTILE_SECRET_KEY and TURNSTILE_SITE_KEY
 
 ## Development
 
