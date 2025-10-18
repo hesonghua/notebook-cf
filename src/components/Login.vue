@@ -6,8 +6,8 @@
       <form @submit.prevent="login">
         <input v-model="username" type="text" placeholder="用户名" required />
         <input v-model="password" type="password" placeholder="密码" required />
-        <div class="cf-turnstile" ref="loginTurnstile"></div>
-        <button type="submit" :disabled="!loginTurnstileToken">登录</button>
+        <div v-if="config.turnstileEnabled" class="cf-turnstile" ref="loginTurnstile"></div>
+        <button type="submit" :disabled="config.turnstileEnabled && !loginTurnstileToken">登录</button>
       </form>
       <p v-if="error" class="error">{{ error }}</p>
       <p class="switch-text">
@@ -21,8 +21,8 @@
       <form @submit.prevent="register">
         <input v-model="regUsername" type="text" placeholder="用户名" required />
         <input v-model="regPassword" type="password" placeholder="密码" required />
-        <div class="cf-turnstile" ref="registerTurnstile"></div>
-        <button type="submit" :disabled="!registerTurnstileToken">注册</button>
+        <div v-if="config.turnstileEnabled" class="cf-turnstile" ref="registerTurnstile"></div>
+        <button type="submit" :disabled="config.turnstileEnabled && !registerTurnstileToken">注册</button>
       </form>
       <p v-if="regError" class="error">{{ regError }}</p>
       <p class="switch-text">
@@ -37,11 +37,14 @@ import { ref, onMounted, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteStore } from '../stores/noteStore.js';
 import { useCategoryStore } from '../stores/categoryStore.js';
+import { useConfigStore } from '../stores/configStore.js';
 import { login as apiLogin, register as apiRegister } from '../utils/api.js';
 
 const router = useRouter();
 const noteStore = useNoteStore();
 const categoryStore = useCategoryStore();
+const {config} = useConfigStore();
+
 const username = ref('');
 const password = ref('');
 const error = ref('');
@@ -55,13 +58,17 @@ const loginTurnstile = ref(null);
 const registerTurnstile = ref(null);
 const loginTurnstileToken = ref('');
 const registerTurnstileToken = ref('');
-const turnstileSiteKey = '0x4AAAAAAB38IwtjhY2Nu-gX';
-
 let loginWidgetId = null;
 let registerWidgetId = null;
 
-onMounted(async () => {
-    initializeTurnstile();
+onMounted(() => {
+  // 由于 app.mount() 在 fetchConfig() 之后执行，
+  // 所以在这里 configStore.config 肯定已经有值了。
+  if (config.turnstileEnabled) {
+    nextTick(() => {
+      initializeTurnstile();
+    });
+  }
 });
 
 function initializeTurnstile() {
@@ -82,11 +89,9 @@ function initializeTurnstile() {
 
 function renderLoginTurnstile() {
   if (loginTurnstile.value && window.turnstile && loginWidgetId === null) {
-    // 清除任何现有的turnstile实例
     loginTurnstile.value.innerHTML = '';
-    
     loginWidgetId = window.turnstile.render(loginTurnstile.value, {
-      sitekey: turnstileSiteKey,
+      sitekey: config.turnstileSiteKey,
       callback: (token) => {
         loginTurnstileToken.value = token;
       },
@@ -107,7 +112,7 @@ function renderRegisterTurnstile() {
       registerTurnstile.value.innerHTML = '';
       
       registerWidgetId = window.turnstile.render(registerTurnstile.value, {
-        sitekey: turnstileSiteKey,
+        sitekey: config.turnstileSiteKey,
         callback: (token) => {
           registerTurnstileToken.value = token;
         },
@@ -123,7 +128,7 @@ function renderRegisterTurnstile() {
 }
 
 async function login() {
-  if (!loginTurnstileToken.value) {
+  if (config.turnstileEnabled && !loginTurnstileToken.value) {
     error.value = '请完成验证';
     return;
   }
@@ -148,7 +153,7 @@ async function login() {
 }
 
 async function register() {
-  if (!registerTurnstileToken.value) {
+  if (turnstileEnabled.value && !registerTurnstileToken.value) {
     regError.value = '请完成验证';
     return;
   }

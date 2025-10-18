@@ -13,21 +13,23 @@ async function registerHandler(request, env) {
   const body = await parseRequestBody(request);
   const { username, password, turnstileToken } = body;
 
-  if (!turnstileToken) {
-    return Response.json(
-      { success: false, message: 'Turnstile verification required' },
-      { status: 400 }
-    );
-  }
+  if (env.TURNSTILE_ENABLED === 'true') {
+    if (!turnstileToken) {
+      return Response.json(
+        { success: false, message: 'Turnstile verification required' },
+        { status: 400 }
+      );
+    }
 
-  const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
-  const validation = await validateTurnstile(turnstileToken, ip, env.TURNSTILE_SECRET_KEY);
-  if (!validation.success) {
-    console.log('Invalid turnstile token:', validation['error-codes']);
-    return Response.json(
-      { success: false, message: 'Invalid verification' },
-      { status: 400 }
-    );
+    const ip = request.headers.get('CF-Connecting-IP') || request.headers.get('X-Forwarded-For') || 'unknown';
+    const validation = await validateTurnstile(turnstileToken, ip, env.TURNSTILE_SECRET_KEY);
+    if (!validation.success) {
+      console.log('Invalid turnstile token:', validation['error-codes']);
+      return Response.json(
+        { success: false, message: 'Invalid verification' },
+        { status: 400 }
+      );
+    }
   }
 
   if (!username || !password) {

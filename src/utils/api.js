@@ -22,6 +22,14 @@ async function fetchWithAuth(url, options = {}) {
   return response;
 }
 
+export async function getConfig() {
+  const response = await fetchWithAuth('/api/config');
+  if (!response.ok) {
+    throw new Error('Failed to fetch config');
+  }
+  return response.json();
+}
+
 export async function login(username, password, turnstileToken) {
   const response = await fetchWithAuth('/api/login', {
     method: 'POST',

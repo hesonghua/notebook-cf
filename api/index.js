@@ -4,6 +4,7 @@ import loginHandler from './login.js';
 import registerHandler from './register.js';
 import notesHandler from './notes.js';
 import categoriesHandler from './categories.js';
+import configHandler from './config.js';
 
 const app = new Hono().basePath('/api');
 
@@ -30,6 +31,7 @@ app.all('/login', createHandler(loginHandler));
 app.all('/register', createHandler(registerHandler));
 app.all('/notes', createHandler(notesHandler));
 app.all('/categories', createHandler(categoriesHandler));
+app.all('/config', createHandler(configHandler));
 
 // 404 处理
 app.notFound((c) => {

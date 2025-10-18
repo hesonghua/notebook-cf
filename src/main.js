@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { useConfigStore } from './stores/configStore'
 
 import App from './App.vue'
 import router from './router'
@@ -19,4 +20,7 @@ app.directive('focus', {
 app.use(createPinia())
 app.use(router)
 
-app.mount('body')
+const configStore = useConfigStore()
+configStore.fetchConfig().then(() => {
+  app.mount('body')
+})
