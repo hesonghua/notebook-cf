@@ -153,7 +153,7 @@ async function login() {
 }
 
 async function register() {
-  if (turnstileEnabled.value && !registerTurnstileToken.value) {
+  if (config.turnstileEnabled && !registerTurnstileToken.value) {
     regError.value = '请完成验证';
     return;
   }
