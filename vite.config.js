@@ -18,4 +18,21 @@ export default defineConfig({
 			'@': fileURLToPath(new URL('./src', import.meta.url))
 		},
 	},
+	build: {
+		rollupOptions: {
+			output: {
+				manualChunks(id) {
+					if (id.includes('node_modules')) {
+						if (id.includes('codemirror')) {
+							return 'codemirror';
+						} else if (id.includes('markdown-it')) {
+							return 'markdown-it';
+						} else if (id.includes('katex')) {
+							return 'katex';
+						}
+					}
+				}
+			}
+		}
+	}
 })
