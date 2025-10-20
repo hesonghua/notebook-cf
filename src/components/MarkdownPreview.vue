@@ -1,51 +1,109 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 import { marked } from 'marked'
-import { markedHighlight } from "marked-highlight";
-import mermaid from 'mermaid'
+import { markedHighlight } from 'marked-highlight'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import hljs from 'highlight.js/lib/core'
+import 'highlight.js/styles/atom-one-dark.css'
+
+// 导入常用语言（按使用频率排序）
 import javascript from 'highlight.js/lib/languages/javascript'
 import typescript from 'highlight.js/lib/languages/typescript'
 import python from 'highlight.js/lib/languages/python'
 import java from 'highlight.js/lib/languages/java'
+import cpp from 'highlight.js/lib/languages/cpp'
+import csharp from 'highlight.js/lib/languages/csharp'
+import go from 'highlight.js/lib/languages/go'
+import rust from 'highlight.js/lib/languages/rust'
+import php from 'highlight.js/lib/languages/php'
+import ruby from 'highlight.js/lib/languages/ruby'
+import swift from 'highlight.js/lib/languages/swift'
+import kotlin from 'highlight.js/lib/languages/kotlin'
 import css from 'highlight.js/lib/languages/css'
+import scss from 'highlight.js/lib/languages/scss'
 import html from 'highlight.js/lib/languages/xml'
+import markdown from 'highlight.js/lib/languages/markdown'
 import json from 'highlight.js/lib/languages/json'
-import bash from 'highlight.js/lib/languages/bash'
+import yaml from 'highlight.js/lib/languages/yaml'
 import sql from 'highlight.js/lib/languages/sql'
+import bash from 'highlight.js/lib/languages/bash'
+import shell from 'highlight.js/lib/languages/shell'
+import powershell from 'highlight.js/lib/languages/powershell'
+import dockerfile from 'highlight.js/lib/languages/dockerfile'
+import nginx from 'highlight.js/lib/languages/nginx'
 import plaintext from 'highlight.js/lib/languages/plaintext'
-import 'highlight.js/styles/atom-one-dark.css'
-
-mermaid.initialize({
-  startOnLoad: false,
-  theme: 'neutral',
-});
-
 
 // 注册常用语言
-hljs.registerLanguage('javascript', javascript)
-hljs.registerLanguage('typescript', typescript)
-hljs.registerLanguage('python', python)
-hljs.registerLanguage('java', java)
-hljs.registerLanguage('css', css)
-hljs.registerLanguage('html', html)
-hljs.registerLanguage('json', json)
-hljs.registerLanguage('bash', bash)
-hljs.registerLanguage('sql', sql)
-hljs.registerLanguage('plaintext', plaintext)
+const languages = {
+  javascript,
+  typescript,
+  python,
+  java,
+  cpp,
+  c: cpp, // C 使用 cpp 高亮
+  csharp,
+  'c#': csharp,
+  go,
+  rust,
+  php,
+  ruby,
+  swift,
+  kotlin,
+  css,
+  scss,
+  sass: scss,
+  html,
+  xml: html,
+  markdown,
+  md: markdown,
+  json,
+  yaml,
+  yml: yaml,
+  sql,
+  bash,
+  sh: bash,
+  shell,
+  zsh: shell,
+  powershell,
+  ps1: powershell,
+  dockerfile,
+  docker: dockerfile,
+  nginx,
+  plaintext,
+  text: plaintext,
+}
 
-const props = defineProps({
-  selectedNote: Object,
+// 批量注册语言
+Object.entries(languages).forEach(([name, lang]) => {
+  hljs.registerLanguage(name, lang)
 })
 
-const previewRef = ref(null)
+// Mermaid 动态导入（延迟加载）
+let mermaid = null
+const loadMermaid = async () => {
+  if (!mermaid) {
+    const mermaidModule = await import('mermaid')
+    mermaid = mermaidModule.default
+    mermaid.initialize({
+      startOnLoad: false,
+      // Mermaid 内置主题：
+      // 'default' - 默认主题，蓝色系，清晰易读
+      // 'forest' - 森林主题，绿色系
+      // 'dark' - 深色主题
+      // 'neutral' - 中性主题，灰色系
+      // 'base' - 基础主题，可自定义
+      theme: 'default',
+      // 可选：微调字体大小
+      themeVariables: {
+        fontSize: '16px',
+      },
+    })
+  }
+  return mermaid
+}
 
-defineExpose({
-  previewRef,
-})
-
+// KaTeX 配置
 const katexOptions = {
   displayMode: true,
   throwOnError: false,
@@ -73,9 +131,10 @@ const katexOptions = {
     "\\supp": "\\operatorname{supp}",
     "\\diag": "\\operatorname{diag}",
   },
-};
+}
 
-const extension = {
+// Marked 自定义扩展
+const markedExtensions = {
   extensions: [
     {
       name: 'mermaid',
@@ -171,75 +230,104 @@ const extension = {
       },
     },
   ],
-};
+}
 
-marked.use({ gfm: true }, extension);
+// 配置 Marked
+marked.use({ gfm: true }, markedExtensions)
 
-marked.use(markedHighlight({
-  highlight(code, lang) {
-    const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-    return hljs.highlight(code, { language }).value;
-  }
-}));
+
+marked.use(
+  markedHighlight({
+    highlight(code, lang) {
+      const language = hljs.getLanguage(lang) ? lang : 'plaintext'
+      return hljs.highlight(code, { language }).value
+    },
+  })
+)
 
 marked.setOptions({
   breaks: true,
   langPrefix: 'hljs language-',
-});
-
-const compiledMarkdown = computed(() => {
-  return marked(props.selectedNote.content || '');
 })
 
-watch(compiledMarkdown, async () => {
-  await nextTick();
-  // The 'post' flush option ensures this callback runs after the DOM has been updated,
-  nextTick(processRenderedContent);
-}, { immediate: true });
+// 组件 Props
+const props = defineProps({
+  selectedNote: Object,
+})
 
-const processRenderedContent = () => {
-  if (!previewRef.value) return;
+const previewRef = ref(null)
 
-  // Add copy buttons to pre blocks
-  const pres = previewRef.value.querySelectorAll('pre');
-  pres.forEach(pre => {
-    const code = pre.querySelector('code');
+defineExpose({
+  previewRef,
+})
+
+// 编译 Markdown
+
+const compiledMarkdown = computed(() => {
+  return marked(props.selectedNote.content || '')
+})
+
+// 监听内容变化并处理渲染
+
+watch(
+  compiledMarkdown,
+  async () => {
+    await nextTick()
+    nextTick(processRenderedContent)
+  },
+  { immediate: true }
+)
+
+// 处理渲染后的内容（添加复制按钮、渲染 Mermaid 图表）
+
+const processRenderedContent = async () => {
+  if (!previewRef.value) return
+
+  // 为代码块添加复制按钮
+  const pres = previewRef.value.querySelectorAll('pre')
+  pres.forEach((pre) => {
+    const code = pre.querySelector('code')
     if (code && !pre.querySelector('.copy-button')) {
-      const button = document.createElement('button');
-      button.innerText = 'Copy';
-      button.className = 'copy-button';
+      const button = document.createElement('button')
+      button.innerText = 'Copy'
+      button.className = 'copy-button'
       button.addEventListener('click', () => {
         navigator.clipboard.writeText(code.innerText).then(() => {
-          button.innerText = 'Copied!';
+          button.innerText = 'Copied!'
           setTimeout(() => {
-            button.innerText = 'Copy';
-          }, 2000);
-        });
-      });
-      pre.style.position = 'relative';
-      pre.appendChild(button);
+            button.innerText = 'Copy'
+          }, 2000)
+        })
+      })
+      pre.style.position = 'relative'
+      pre.appendChild(button)
     }
-  });
+  })
 
-  // Render Mermaid diagrams using the modern async API
-  const mermaidDivs = previewRef.value.querySelectorAll('.mermaid');
-  mermaidDivs.forEach(async (div, i) => {
-    if (div.hasAttribute('data-mermaid-processed')) return;
+  // 渲染 Mermaid 图表（按需加载）
+  const mermaidDivs = previewRef.value.querySelectorAll('.mermaid')
+  if (mermaidDivs.length > 0) {
+    // 只有当页面中有 mermaid 图表时才加载 mermaid 库
+    const mermaidInstance = await loadMermaid()
+    
+    mermaidDivs.forEach(async (div, i) => {
+      if (div.hasAttribute('data-mermaid-processed')) return
 
-    const id = `mermaid-svg-${Date.now()}-${i}`;
-    const graphDefinition = div.textContent || '';
-    div.textContent = ''; // Clear content to prevent flash of unrendered code
-    div.setAttribute('data-mermaid-processed', 'true');
+      const id = `mermaid-svg-${Date.now()}-${i}`
+      const graphDefinition = div.textContent || ''
+      div.textContent = '' // 清空内容以防止未渲染代码闪烁
+      div.setAttribute('data-mermaid-processed', 'true')
 
-    try {
-      const { svg } = await mermaid.render(id, graphDefinition);
-      div.innerHTML = svg;
-    } catch (e) {
-      console.error('Mermaid rendering error:', e);
-      div.textContent = '';
-    }
-  });
-};
+      try {
+        const { svg } = await mermaidInstance.render(id, graphDefinition)
+        div.innerHTML = svg
+      } catch (e) {
+        console.error('Mermaid 渲染错误:', e)
+        div.textContent = ''
+      }
+    })
+  }
+}
 </script>
 
 <template>
@@ -624,5 +712,101 @@ const processRenderedContent = () => {
   :deep(table) {
     -webkit-overflow-scrolling: touch;
   }
+
+/* Mermaid 图表样式优化 */
+:deep(.mermaid) {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2em 0;
+  padding: 1.5em;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 100px;
+}
+
+:deep(.mermaid svg) {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
+}
+
+/* 优化 Mermaid 图表中的文字 */
+:deep(.mermaid .nodeLabel),
+:deep(.mermaid .edgeLabel),
+:deep(.mermaid .labelText),
+:deep(.mermaid text) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+  font-weight: 500;
+}
+
+/* 优化节点样式 */
+:deep(.mermaid .node rect),
+:deep(.mermaid .node circle),
+:deep(.mermaid .node ellipse),
+:deep(.mermaid .node polygon) {
+  stroke-width: 2px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1));
+}
+
+/* 优化连接线 */
+:deep(.mermaid .edgePath path) {
+  stroke-width: 2px;
+}
+
+/* 优化箭头 */
+:deep(.mermaid .arrowheadPath) {
+  fill: #6366f1;
+}
+
+/* 移动端 Mermaid 优化 */
+@media (max-width: var(--mobile-breakpoint)) {
+  :deep(.mermaid) {
+    padding: 1em;
+    margin: 1.5em 0;
+    border-radius: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  :deep(.mermaid svg) {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  :deep(.mermaid .nodeLabel),
+  :deep(.mermaid .edgeLabel),
+  :deep(.mermaid .labelText),
+  :deep(.mermaid text) {
+    font-size: 12px !important;
+  }
+}
+
+/* 平板端 Mermaid 优化 */
+@media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
+  :deep(.mermaid) {
+    padding: 1.3em;
+  }
+  
+  :deep(.mermaid .nodeLabel),
+  :deep(.mermaid .edgeLabel),
+  :deep(.mermaid .labelText),
+  :deep(.mermaid text) {
+    font-size: 13px !important;
+  }
+}
+
+/* 深色模式支持（可选） */
+@media (prefers-color-scheme: dark) {
+  :deep(.mermaid) {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: #334155;
+  }
+}
 }
 </style>

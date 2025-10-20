@@ -19,6 +19,7 @@ export default defineConfig({
 		},
 	},
 	build: {
+		chunkSizeWarningLimit: 2500, // 提高警告阈值（mermaid 本身就很大，但已按需加载）
 		rollupOptions: {
 			output: {
 				manualChunks(id) {
@@ -29,6 +30,10 @@ export default defineConfig({
 							return 'markdown-it';
 						} else if (id.includes('katex')) {
 							return 'katex';
+						} else if (id.includes('highlight.js')) {
+							return 'highlight';
+						} else if (id.includes('mermaid')) {
+							return 'mermaid';
 						}
 					}
 				}
