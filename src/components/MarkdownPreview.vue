@@ -25,10 +25,15 @@ import scss from 'highlight.js/lib/languages/scss'
 import html from 'highlight.js/lib/languages/xml'
 import markdown from 'highlight.js/lib/languages/markdown'
 import json from 'highlight.js/lib/languages/json'
+import erlang from 'highlight.js/lib/languages/erlang'
 import yaml from 'highlight.js/lib/languages/yaml'
 import sql from 'highlight.js/lib/languages/sql'
+import pgsql from 'highlight.js/lib/languages/pgsql'
 import bash from 'highlight.js/lib/languages/bash'
 import shell from 'highlight.js/lib/languages/shell'
+import perl from 'highlight.js/lib/languages/perl'
+import verilog from 'highlight.js/lib/languages/verilog'
+import lua from 'highlight.js/lib/languages/lua'
 import powershell from 'highlight.js/lib/languages/powershell'
 import dockerfile from 'highlight.js/lib/languages/dockerfile'
 import nginx from 'highlight.js/lib/languages/nginx'
@@ -61,6 +66,12 @@ const languages = {
   yaml,
   yml: yaml,
   sql,
+  pgsql,
+  verilog,
+  erlang,
+  perl,
+  pl: perl,
+  lua,
   bash,
   sh: bash,
   shell,
@@ -235,7 +246,6 @@ const markedExtensions = {
 // 配置 Marked
 marked.use({ gfm: true }, markedExtensions)
 
-
 marked.use(
   markedHighlight({
     highlight(code, lang) {
@@ -262,13 +272,11 @@ defineExpose({
 })
 
 // 编译 Markdown
-
 const compiledMarkdown = computed(() => {
   return marked(props.selectedNote.content || '')
 })
 
 // 监听内容变化并处理渲染
-
 watch(
   compiledMarkdown,
   async () => {
@@ -279,7 +287,6 @@ watch(
 )
 
 // 处理渲染后的内容（添加复制按钮、渲染 Mermaid 图表）
-
 const processRenderedContent = async () => {
   if (!previewRef.value) return
 
@@ -712,6 +719,7 @@ const processRenderedContent = async () => {
   :deep(table) {
     -webkit-overflow-scrolling: touch;
   }
+}
 
 /* Mermaid 图表样式优化 */
 :deep(.mermaid) {
@@ -792,7 +800,7 @@ const processRenderedContent = async () => {
   :deep(.mermaid) {
     padding: 1.3em;
   }
-  
+
   :deep(.mermaid .nodeLabel),
   :deep(.mermaid .edgeLabel),
   :deep(.mermaid .labelText),
@@ -807,6 +815,5 @@ const processRenderedContent = async () => {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border-color: #334155;
   }
-}
 }
 </style>
