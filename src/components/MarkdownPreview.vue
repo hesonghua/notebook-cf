@@ -1,6 +1,8 @@
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
 import { marked } from 'marked'
+import { markedHighlight } from "marked-highlight";
+import mermaid from 'mermaid'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
 import hljs from 'highlight.js/lib/core'
@@ -13,7 +15,14 @@ import html from 'highlight.js/lib/languages/xml'
 import json from 'highlight.js/lib/languages/json'
 import bash from 'highlight.js/lib/languages/bash'
 import sql from 'highlight.js/lib/languages/sql'
+import plaintext from 'highlight.js/lib/languages/plaintext'
 import 'highlight.js/styles/atom-one-dark.css'
+
+mermaid.initialize({
+  startOnLoad: false,
+  theme: 'neutral',
+});
+
 
 // 注册常用语言
 hljs.registerLanguage('javascript', javascript)
@@ -25,6 +34,7 @@ hljs.registerLanguage('html', html)
 hljs.registerLanguage('json', json)
 hljs.registerLanguage('bash', bash)
 hljs.registerLanguage('sql', sql)
+hljs.registerLanguage('plaintext', plaintext)
 
 const props = defineProps({
   selectedNote: Object,
@@ -67,6 +77,27 @@ const katexOptions = {
 
 const extension = {
   extensions: [
+    {
+      name: 'mermaid',
+      level: 'block',
+      start(src) {
+        return src.indexOf('```mermaid');
+      },
+      tokenizer(src) {
+        const match = src.match(/^```mermaid\n([\s\S]+?)\n```/);
+        if (match) {
+          return {
+            type: 'mermaid',
+            raw: match[0],
+            text: match[1].trim(),
+          };
+        }
+      },
+      renderer(token) {
+        // The renderer just creates the container; the actual rendering happens in the lifecycle hook
+        return `<div class="mermaid">${token.text}</div>`;
+      }
+    },
     {
       name: 'blockMath',
       level: 'block',
@@ -144,12 +175,16 @@ const extension = {
 
 marked.use({ gfm: true }, extension);
 
-marked.setOptions({
-  breaks: true,
-  highlight: function (code, lang) {
+marked.use(markedHighlight({
+  highlight(code, lang) {
     const language = hljs.getLanguage(lang) ? lang : 'plaintext';
     return hljs.highlight(code, { language }).value;
-  },
+  }
+}));
+
+marked.setOptions({
+  breaks: true,
+  langPrefix: 'hljs language-',
 });
 
 const compiledMarkdown = computed(() => {
@@ -158,28 +193,53 @@ const compiledMarkdown = computed(() => {
 
 watch(compiledMarkdown, async () => {
   await nextTick();
-  if (previewRef.value) {
-    const pres = previewRef.value.querySelectorAll('pre');
-    pres.forEach(pre => {
-      const code = pre.querySelector('code');
-      if (code && !pre.querySelector('.copy-button')) {
-        const button = document.createElement('button');
-        button.innerText = 'Copy';
-        button.className = 'copy-button';
-        button.addEventListener('click', () => {
-          navigator.clipboard.writeText(code.innerText).then(() => {
-            button.innerText = 'Copied!';
-            setTimeout(() => {
-              button.innerText = 'Copy';
-            }, 2000);
-          });
+  // The 'post' flush option ensures this callback runs after the DOM has been updated,
+  nextTick(processRenderedContent);
+}, { immediate: true });
+
+const processRenderedContent = () => {
+  if (!previewRef.value) return;
+
+  // Add copy buttons to pre blocks
+  const pres = previewRef.value.querySelectorAll('pre');
+  pres.forEach(pre => {
+    const code = pre.querySelector('code');
+    if (code && !pre.querySelector('.copy-button')) {
+      const button = document.createElement('button');
+      button.innerText = 'Copy';
+      button.className = 'copy-button';
+      button.addEventListener('click', () => {
+        navigator.clipboard.writeText(code.innerText).then(() => {
+          button.innerText = 'Copied!';
+          setTimeout(() => {
+            button.innerText = 'Copy';
+          }, 2000);
         });
-        pre.style.position = 'relative';
-        pre.appendChild(button);
-      }
-    });
-  }
-});
+      });
+      pre.style.position = 'relative';
+      pre.appendChild(button);
+    }
+  });
+
+  // Render Mermaid diagrams using the modern async API
+  const mermaidDivs = previewRef.value.querySelectorAll('.mermaid');
+  mermaidDivs.forEach(async (div, i) => {
+    if (div.hasAttribute('data-mermaid-processed')) return;
+
+    const id = `mermaid-svg-${Date.now()}-${i}`;
+    const graphDefinition = div.textContent || '';
+    div.textContent = ''; // Clear content to prevent flash of unrendered code
+    div.setAttribute('data-mermaid-processed', 'true');
+
+    try {
+      const { svg } = await mermaid.render(id, graphDefinition);
+      div.innerHTML = svg;
+    } catch (e) {
+      console.error('Mermaid rendering error:', e);
+      div.textContent = '';
+    }
+  });
+};
 </script>
 
 <template>
