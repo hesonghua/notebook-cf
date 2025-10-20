@@ -728,13 +728,12 @@ const processRenderedContent = async () => {
   align-items: center;
   margin: 2em 0;
   padding: 1.5em;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border-radius: 12px;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   overflow-x: auto;
   overflow-y: hidden;
   min-height: 100px;
+  background: transparent; /* 让 Mermaid 自己控制背景 */
 }
 
 :deep(.mermaid svg) {
@@ -742,7 +741,6 @@ const processRenderedContent = async () => {
   height: auto;
   display: block;
   margin: 0 auto;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.05));
 }
 
 /* 优化 Mermaid 图表中的文字 */
@@ -751,26 +749,6 @@ const processRenderedContent = async () => {
 :deep(.mermaid .labelText),
 :deep(.mermaid text) {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
-  font-weight: 500;
-}
-
-/* 优化节点样式 */
-:deep(.mermaid .node rect),
-:deep(.mermaid .node circle),
-:deep(.mermaid .node ellipse),
-:deep(.mermaid .node polygon) {
-  stroke-width: 2px;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.1));
-}
-
-/* 优化连接线 */
-:deep(.mermaid .edgePath path) {
-  stroke-width: 2px;
-}
-
-/* 优化箭头 */
-:deep(.mermaid .arrowheadPath) {
-  fill: #6366f1;
 }
 
 /* 移动端 Mermaid 优化 */
@@ -786,34 +764,12 @@ const processRenderedContent = async () => {
     max-width: 100%;
     height: auto;
   }
-  
-  :deep(.mermaid .nodeLabel),
-  :deep(.mermaid .edgeLabel),
-  :deep(.mermaid .labelText),
-  :deep(.mermaid text) {
-    font-size: 12px !important;
-  }
 }
 
 /* 平板端 Mermaid 优化 */
 @media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
   :deep(.mermaid) {
     padding: 1.3em;
-  }
-
-  :deep(.mermaid .nodeLabel),
-  :deep(.mermaid .edgeLabel),
-  :deep(.mermaid .labelText),
-  :deep(.mermaid text) {
-    font-size: 13px !important;
-  }
-}
-
-/* 深色模式支持（可选） */
-@media (prefers-color-scheme: dark) {
-  :deep(.mermaid) {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-color: #334155;
   }
 }
 </style>
