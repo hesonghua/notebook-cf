@@ -136,7 +136,7 @@ button {
     margin: 0 !important;
   }
 
-  * {
+  *:not(.katex-display):not(.katex-display *):not(.katex):not(.katex *) {
     overflow: visible !important;
   }
 }

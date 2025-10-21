@@ -712,11 +712,6 @@ onBeforeUnmount(() => {
     margin: 15mm 20mm;
   }
 
-  /* 全局重置所有容器 */
-  * {
-    overflow: visible !important;
-  }
-
   html, body {
     height: auto !important;
     overflow: visible !important;
