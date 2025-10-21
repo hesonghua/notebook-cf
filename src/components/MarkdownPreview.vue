@@ -293,6 +293,7 @@ marked.use(
 marked.setOptions({
   breaks: true,
   langPrefix: 'hljs language-',
+  sanitize: false,
 })
 
 // 组件 Props
