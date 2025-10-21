@@ -107,31 +107,40 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+/* Nord Theme Colors */
+:root {
+  --nord0: #2e3440; --nord1: #3b4252; --nord2: #434c5e; --nord3: #4c566a;
+  --nord4: #d8dee9; --nord5: #e5e9f0; --nord6: #eceff4;
+  --nord7: #8fbcbb; --nord8: #88c0d0; --nord9: #81a1c1; --nord10: #5e81ac;
+  --nord11: #bf616a; --nord12: #d08770; --nord13: #ebcb8b; --nord14: #a3be8c;
+  --nord15: #b48ead;
+}
+
 .note-item {
-  padding: 3px 5px;
+  padding: 0.6rem 0.75rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
   border-radius: 6px;
-  font-size: 0.95em;
+  font-size: 0.9rem;
   margin-bottom: 2px;
   transition: background-color 0.2s, color 0.2s;
-  min-height: var(--touch-target-size);
-  box-sizing: border-box;
+  color: var(--nord2);
+  font-weight: 500;
 }
 
 .note-item:hover {
-  background-color: #e9ecef;
+  background-color: var(--nord5);
 }
 
 .note-item.selected {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--nord10);
+  color: var(--nord6);
 }
 
 .note-item.selected:hover {
-  background-color: #0069d9;
+  background-color: var(--nord9);
 }
 
 .note-title {
@@ -146,21 +155,19 @@ onBeforeUnmount(() => {
   gap: 0.5em;
 }
 
-
 .favorite-star {
-  color: #ffc107;
+  color: var(--nord13);
 }
 
 .context-menu {
   position: fixed;
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: white;
+  border: 1px solid var(--nord5);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   z-index: 1000;
   border-radius: 8px;
-  padding: 6px;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  font-size: 14px;
+  padding: 0.5rem;
+  font-size: 0.9rem;
   min-width: 160px;
 }
 
@@ -171,24 +178,24 @@ onBeforeUnmount(() => {
 }
 
 .context-menu li {
-  padding: 9px 12px;
+  padding: 0.6rem 0.8rem;
   cursor: pointer;
   border-radius: 6px;
   transition: background-color 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  color: #333;
+  color: var(--nord1);
 }
 
 .context-menu li:hover {
-  background-color: #f5f5f5;
+  background-color: var(--nord6);
 }
 
 .context-menu .separator {
   height: 1px;
-  background-color: #f0f0f0;
-  margin: 4px 0;
+  background-color: var(--nord5);
+  margin: 0.25rem 0;
   padding: 0;
 }
 
@@ -197,55 +204,26 @@ onBeforeUnmount(() => {
 }
 
 .context-menu .has-submenu::after {
-  content: '▶';
-  font-size: 10px;
-  color: #999;
+  content: '›';
+  font-size: 1.2em;
+  color: var(--nord3);
 }
 
 .context-menu .submenu {
   position: absolute;
-  top: -7px;
+  top: -0.5rem;
   left: 100%;
-  background: #fff;
-  border: 1px solid #e0e0e0;
+  background: white;
+  border: 1px solid var(--nord5);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   border-radius: 8px;
-  padding: 6px;
+  padding: 0.5rem;
   display: none;
   min-width: 150px;
+  margin-left: 0.25rem;
 }
 
 .context-menu .has-submenu:hover .submenu {
   display: block;
-}
-
-
-/* 移动端适配 */
-@media (max-width: var(--mobile-breakpoint)) {
-  .note-item {
-    padding: 12px 16px;
-    font-size: 1rem;
-    margin-bottom: 4px;
-  }
-  
-  .note-title {
-    font-size: 1rem;
-    line-height: 1.4;
-  }
-}
-
-/* 平板端适配 */
-@media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
-  .note-item {
-    padding: 10px 14px;
-    font-size: 0.98rem;
-  }
-}
-
-/* 触摸设备优化 */
-@media (hover: none) and (pointer: coarse) {
-  .note-item:hover {
-    background-color: initial;
-  }
 }
 </style>

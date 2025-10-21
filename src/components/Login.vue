@@ -10,7 +10,7 @@
         <button type="submit" :disabled="config.turnstileEnabled && !loginTurnstileToken">登录</button>
       </form>
       <p v-if="error" class="error">{{ error }}</p>
-      <p class="switch-text">
+      <p class="switch-text" v-if="config.registerEnabled">
         没有账号？<button class="switch-btn" @click="switchToRegister">注册</button>
       </p>
     </div>

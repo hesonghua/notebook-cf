@@ -3,7 +3,7 @@ import { hashPassword, validateTurnstile } from './_utils/_auth.js';
 import { executeQuery } from './_utils/_db.js';
 
 async function registerHandler(request, env) {
-  if (request.method !== 'POST') {
+  if (request.method !== 'POST' || env.REGISTER_ENABLED != 'true') {
     return Response.json(
       { success: false, message: 'Method Not Allowed' },
       { status: 405 }

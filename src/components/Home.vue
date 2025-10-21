@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container" :class="{ 'sidebar-collapsed': isSidebarCollapsed }">
     <!-- 移动端侧边栏遮罩 -->
     <div
       v-if="isMobile && sidebarVisible"
@@ -11,8 +11,7 @@
     <Sidebar
       :class="{ 'sidebar-mobile': isMobile, 'sidebar-visible': sidebarVisible }"
       :isSidebarCollapsed="isSidebarCollapsed"
-      @toggle-sidebar="toggleSidebar"
-      :style="!isMobile ? { width: isSidebarCollapsed ? '50px' : `${sidebarWidth}px` } : {}"
+      :style="!isMobile && !isSidebarCollapsed ? { width: sidebarWidth + 'px' } : {}"
     />
     
     <!-- 桌面端调整器 -->
@@ -22,94 +21,72 @@
       @mousedown="startResize"
     ></div>
     
-    <main class="main-content" v-if="noteStore.selectedNote">
-        <div class="editor-header">
-          <!-- 移动端菜单按钮 -->
-          <button
-            v-if="isMobile"
-            class="mobile-menu-btn"
-            @click="toggleSidebar"
-            data-tooltip="菜单"
-          >
-            ☰
+    <main class="main-content">
+      <div class="editor-header">
+        <div class="header-left">
+          <button class="icon-btn" @click="toggleSidebar" data-tooltip="切换侧边栏">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
           </button>
-          
-          <div class="editor-controls">
-            <div class="view-mode-buttons">
-              <button
-                class="view-mode-btn"
-                :class="{ active: viewMode === 'edit' }"
-                @click="setViewMode('edit')"
-                data-tooltip="编辑模式"
-              >
-                📝
-              </button>
-              <button
-                v-if="!isMobile"
-                class="view-mode-btn"
-                :class="{ active: viewMode === 'split' }"
-                @click="setViewMode('split')"
-                data-tooltip="分屏模式"
-              >
-                📄
-              </button>
-              <button
-                class="view-mode-btn"
-                :class="{ active: viewMode === 'preview' }"
-                @click="setViewMode('preview')"
-                data-tooltip="预览模式"
-              >
-                👁️
-              </button>
-            </div>
-            
-            <button
-              class="save-btn"
-              @click="saveCurrentNote"
-              :disabled="!noteStore.selectedNote?.dirty"
-              data-tooltip="保存文章 (Ctrl+S)"
-            >
-              💾
+          <div class="separator"></div>
+          <button class="icon-btn" @click="noteStore.handleAddNote" data-tooltip="新笔记">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+          </button>
+          <button class="icon-btn" @click="categoryStore.handleAddCategory" data-tooltip="新分类">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path><line x1="12" y1="11" x2="12" y2="17"></line><line x1="9" y1="14" x2="15" y2="14"></line></svg>
+          </button>
+          <button v-if="!isMobile" class="icon-btn" @click="noteStore.forceRefreshNotes(); categoryStore.fetchCategories()" data-tooltip="刷新">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+          </button>
+        </div>
+        
+        <div class="header-right">
+          <div v-if="noteStore.selectedNote" class="view-mode-buttons">
+            <button class="icon-btn view-mode-btn" :class="{ active: viewMode === 'edit' }" @click="setViewMode('edit')" data-tooltip="编辑模式">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
             </button>
-            
-            <button
-              class="logout-btn"
-              @click="logout"
-              data-tooltip="注销登录"
-            >
-              🚪
+            <button v-if="!isMobile" class="icon-btn view-mode-btn" :class="{ active: viewMode === 'split' }" @click="setViewMode('split')" data-tooltip="分屏模式">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18"></path><path d="M3 3v18h18V3H3z"></path></svg>
+            </button>
+            <button class="icon-btn view-mode-btn" :class="{ active: viewMode === 'preview' }" @click="setViewMode('preview')" data-tooltip="预览模式">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
           </div>
+          <button v-if="noteStore.selectedNote" class="icon-btn save-btn" @click="saveCurrentNote" :disabled="!noteStore.selectedNote?.dirty" data-tooltip="保存 (Ctrl+S)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          </button>
+     
+          <button v-if="noteStore.selectedNote && !isMobile" class="icon-btn" @click="handlePrint" data-tooltip="打印/导出PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+          </button>
+          <button class="icon-btn logout-btn" @click="logout" data-tooltip="注销">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+          </button>
         </div>
-        <div class="editor-container" :class="`view-mode-${viewMode}`">
-            <textarea
-              v-show="viewMode === 'edit' || (viewMode === 'split' && !isMobile)"
-              class="markdown-source"
-              :value="noteStore.selectedNote.content"
-              @input="updateNoteContent"
-              ref="editorRef"
-              @scroll="handleEditorScroll"
-            ></textarea>
-            <MarkdownPreview
-              v-show="viewMode === 'preview' || (viewMode === 'split' && !isMobile)"
-              :selectedNote="noteStore.selectedNote"
-              ref="previewRef"
-              @scroll="handlePreviewScroll"
-            />
-        </div>
-    </main>
-    <main class="main-content" v-else>
-      <div class="editor-header" v-if="isMobile">
-        <button
-          class="mobile-menu-btn"
-          @click="toggleSidebar"
-          data-tooltip="菜单"
-        >
-          ☰
-        </button>
-        <div class="editor-controls"></div> <!-- 添加空的控制区域以保持布局一致 -->
       </div>
-      <div class="no-note-selected">
+      
+      <div v-if="noteStore.selectedNote" class="editor-container" :class="`view-mode-${viewMode}`">
+        <textarea
+          v-show="viewMode === 'edit' || (viewMode === 'split' && !isMobile)"
+          class="markdown-source"
+          :value="noteStore.selectedNote.content"
+          @input="updateNoteContent"
+          @keydown="handleEditorKeyDown"
+          @paste="handlePaste"
+          @drop="handleDrop"
+          @dragover="handleDragOver"
+          ref="editorRef"
+          @scroll="handleEditorScroll"
+        ></textarea>
+        <MarkdownPreview
+          v-show="viewMode === 'preview' || (viewMode === 'split' && !isMobile)"
+          :selectedNote="noteStore.selectedNote"
+          ref="previewRef"
+          @scroll="handlePreviewScroll"
+          id="print-area"
+        />
+      </div>
+      
+      <div v-else class="no-note-selected">
         <p>Select a note to view, or create a new one.</p>
       </div>
     </main>
@@ -117,15 +94,18 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, inject } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteStore } from '../stores/noteStore.js';
+import { useCategoryStore } from '../stores/categoryStore.js';
+import { uploadImage } from '../utils/api.js';
 import Sidebar from './Sidebar.vue';
 import MarkdownPreview from './MarkdownPreview.vue';
 
 const emitter = inject('emitter');
 const router = useRouter();
 const noteStore = useNoteStore();
+const categoryStore = useCategoryStore();
 const editorRef = ref(null);
 const previewRef = ref(null);
 let isSyncing = false;
@@ -232,6 +212,91 @@ function saveCurrentNote() {
    }
 }
 
+function handleEditorKeyDown(event) {
+  // 处理 Tab 键缩进
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    const textarea = event.target;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const value = textarea.value;
+    const indent = '    '; // 4个空格
+    
+    // 检查是否有选中文本
+    if (start !== end) {
+      // 多行缩进处理
+      // 找到选中区域的起始行和结束行
+      const beforeSelection = value.substring(0, start);
+      const selection = value.substring(start, end);
+      const afterSelection = value.substring(end);
+      
+      // 找到选中区域开始位置所在行的行首
+      const startLineBegin = beforeSelection.lastIndexOf('\n') + 1;
+      const realStart = startLineBegin;
+      
+      // 获取需要处理的文本（从行首到选中结束）
+      const textToIndent = value.substring(realStart, end);
+      
+      let newText;
+      let newSelectionStart;
+      let newSelectionEnd;
+      
+      if (event.shiftKey) {
+        // Shift+Tab: 反向缩进（删除每行开头的4个空格或更少）
+        newText = textToIndent.split('\n').map(line => {
+          // 删除行首最多4个空格
+          if (line.startsWith(indent)) {
+            return line.substring(4);
+          } else if (line.startsWith('   ')) {
+            return line.substring(3);
+          } else if (line.startsWith('  ')) {
+            return line.substring(2);
+          } else if (line.startsWith(' ')) {
+            return line.substring(1);
+          }
+          return line;
+        }).join('\n');
+        
+        // 计算新的选中范围
+        const removedChars = textToIndent.length - newText.length;
+        newSelectionStart = start;
+        newSelectionEnd = end - removedChars;
+      } else {
+        // Tab: 正向缩进（在每行开头添加4个空格）
+        newText = textToIndent.split('\n').map(line => indent + line).join('\n');
+        
+        // 计算新的选中范围
+        const addedChars = newText.length - textToIndent.length;
+        newSelectionStart = start;
+        newSelectionEnd = end + addedChars;
+      }
+      
+      // 构建新内容
+      const newValue = value.substring(0, realStart) + newText + afterSelection;
+      
+      // 更新内容
+      noteStore.updateSelectedNoteContent(newValue);
+      
+      // 恢复选中范围
+      setTimeout(() => {
+        textarea.selectionStart = newSelectionStart;
+        textarea.selectionEnd = newSelectionEnd;
+      }, 0);
+    } else {
+      // 单行缩进：插入4个空格
+      const newValue = value.substring(0, start) + indent + value.substring(end);
+      
+      // 更新内容
+      noteStore.updateSelectedNoteContent(newValue);
+      
+      // 恢复光标位置
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = start + 4;
+      }, 0);
+    }
+  }
+}
+
 function handleKeyDown(event) {
   if ((event.ctrlKey || event.metaKey) && event.key === 's') {
     event.preventDefault();
@@ -248,6 +313,118 @@ function logout() {
   
   // 跳转到登录页
   router.push('/login');
+}
+
+
+// 打印功能
+function handlePrint() {
+  // 保存原始标题
+  const originalTitle = document.title;
+  
+  // 设置打印时的文档标题为笔记标题
+  if (noteStore.selectedNote?.title) {
+    document.title = noteStore.selectedNote.title;
+  }
+  
+  // 执行打印
+  window.print();
+  
+  // 打印对话框关闭后恢复原始标题
+  // 使用 setTimeout 确保在打印对话框关闭后执行
+  setTimeout(() => {
+    document.title = originalTitle;
+  }, 100);
+}
+
+// 图片上传相关函数
+async function handleImageUpload(file) {
+  if (!file || !file.type.startsWith('image/')) {
+    console.error('Invalid file type');
+    return;
+  }
+
+  try {
+    // 在光标位置插入上传中的占位符（使用 data URI 避免触发网络请求）
+    const textarea = editorRef.value;
+    const cursorPos = textarea.selectionStart;
+    const currentContent = noteStore.selectedNote.content;
+    const uploadingText = `![上传中...](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==)`;
+    
+    const newContent =
+      currentContent.substring(0, cursorPos) +
+      uploadingText +
+      currentContent.substring(cursorPos);
+    
+    noteStore.updateSelectedNoteContent(newContent);
+
+    // 上传图片
+    const result = await uploadImage(file);
+    
+    if (result.success) {
+      // 替换占位符为实际的图片链接
+      const finalContent = noteStore.selectedNote.content.replace(
+        uploadingText,
+        `![${file.name}](${result.url})`
+      );
+      noteStore.updateSelectedNoteContent(finalContent);
+      
+      // 恢复光标位置
+      setTimeout(() => {
+        const newPos = cursorPos + `![${file.name}](${result.url})`.length;
+        textarea.selectionStart = textarea.selectionEnd = newPos;
+        textarea.focus();
+      }, 0);
+    } else {
+      // 上传失败，移除占位符
+      const failedContent = noteStore.selectedNote.content.replace(uploadingText, '');
+      noteStore.updateSelectedNoteContent(failedContent);
+      alert('图片上传失败: ' + (result.message || '未知错误'));
+    }
+  } catch (error) {
+    console.error('Upload error:', error);
+    // 移除占位符
+    const uploadingPlaceholder = `![上传中...](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==)`;
+    const errorContent = noteStore.selectedNote.content.replace(uploadingPlaceholder, '');
+    noteStore.updateSelectedNoteContent(errorContent);
+    alert('图片上传失败: ' + error.message);
+  }
+}
+
+// 处理粘贴事件
+async function handlePaste(event) {
+  const items = event.clipboardData?.items;
+  if (!items) return;
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.type.startsWith('image/')) {
+      event.preventDefault();
+      const file = item.getAsFile();
+      if (file) {
+        await handleImageUpload(file);
+      }
+      break;
+    }
+  }
+}
+
+// 处理拖拽放置事件
+async function handleDrop(event) {
+  event.preventDefault();
+  const files = event.dataTransfer?.files;
+  if (!files || files.length === 0) return;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.type.startsWith('image/')) {
+      await handleImageUpload(file);
+    }
+  }
+}
+
+// 处理拖拽悬停事件
+function handleDragOver(event) {
+  event.preventDefault();
 }
 
 onMounted(() => {
@@ -273,34 +450,63 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+/* Nord Theme Colors */
+:root {
+  --nord0: #2e3440; /* Dark text, backgrounds */
+  --nord1: #3b4252;
+  --nord2: #434c5e;
+  --nord3: #4c566a; /* Comments, secondary text */
+  --nord4: #d8dee9; /* UI elements, borders */
+  --nord5: #e5e9f0;
+  --nord6: #eceff4; /* Backgrounds, primary text */
+  --nord7: #8fbcbb; /* Teal */
+  --nord8: #88c0d0; /* Light blue */
+  --nord9: #81a1c1; /* Blue */
+  --nord10: #5e81ac; /* Darker blue */
+  --nord11: #bf616a; /* Red */
+  --nord12: #d08770; /* Orange */
+  --nord13: #ebcb8b; /* Yellow */
+  --nord14: #a3be8c; /* Green */
+  --nord15: #b48ead; /* Purple */
+}
+
 .container {
   display: flex;
   height: 100vh;
   position: relative;
+  background-color: var(--nord6);
+  color: var(--nord0);
+  transition: all 0.3s ease;
 }
 
-/* 移动端侧边栏遮罩 */
+.container.sidebar-collapsed .sidebar {
+  min-width: 0;
+  width: 0;
+  transform: translateX(-100%);
+}
+
+/* Sidebar Overlay */
 .sidebar-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(46, 52, 64, 0.6);
   z-index: 998;
-  backdrop-filter: blur(2px);
+  backdrop-filter: blur(3px);
 }
 
 .resizer {
   width: 5px;
   cursor: col-resize;
-  background-color: #d8dee9;
+  background-color: var(--nord4);
   z-index: 10;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s ease;
 }
 
 .resizer:hover {
-  background-color: #007bff;
+  background-color: var(--nord10);
 }
 
 .main-content {
@@ -313,247 +519,151 @@ onBeforeUnmount(() => {
 
 .editor-header {
   display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
+  justify-content: space-between;
   align-items: center;
-  padding: 0.5rem;
-  background-color: #f8f9fa;
-  border-bottom: 1px solid #d8dee9;
-  min-height: 60px;
+  padding: 0.5rem 1rem;
+  background-color: var(--nord5);
+  border-bottom: 1px solid var(--nord4);
+  min-height: 56px;
   box-sizing: border-box;
+  flex-shrink: 0;
 }
 
-/* 移动端菜单按钮 */
-.mobile-menu-btn {
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.75rem;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.2s;
+.header-left, .header-right {
   display: flex;
   align-items: center;
+  gap: 0.5rem;
+}
+
+.separator {
+  width: 1px;
+  height: 24px;
+  background-color: var(--nord4);
+  margin: 0 0.5rem;
+}
+
+/* Common Icon Button Style */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  min-width: var(--touch-target-size);
-  min-height: var(--touch-target-size);
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: var(--nord3);
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-.mobile-menu-btn:hover {
-  background: #0056b3;
+.icon-btn:hover:not(:disabled) {
+  background-color: var(--nord4);
+  color: var(--nord0);
 }
 
-.mobile-menu-btn:active {
+.icon-btn:active:not(:disabled) {
   transform: scale(0.95);
 }
 
-.editor-controls {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.icon-btn svg {
+  stroke-width: 2;
+}
+
+.mobile-menu-btn {
+  color: var(--nord1);
 }
 
 .view-mode-buttons {
   display: flex;
   gap: 0.25rem;
-  background: #e9ecef;
-  border-radius: 6px;
+  background-color: var(--nord4);
+  border-radius: 8px;
   padding: 0.25rem;
 }
 
+.view-mode-btn {
+  padding: 0.375rem;
+}
+
+.view-mode-btn.active {
+  background-color: var(--nord10);
+  color: var(--nord6);
+  box-shadow: 0 2px 8px rgba(94, 129, 172, 0.3);
+}
+.view-mode-btn.active:hover {
+  background-color: var(--nord9);
+}
+
 .save-btn {
-  background: #28a745;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  min-height: var(--touch-target-size);
+  color: var(--nord14); /* Green */
 }
-
 .save-btn:hover:not(:disabled) {
-  background: #218838;
-  transform: translateY(-1px);
+  background-color: rgba(163, 190, 140, 0.15);
+  color: var(--nord14);
 }
-
-.save-btn:active:not(:disabled) {
-  transform: translateY(0);
-}
-
 .save-btn:disabled {
-  background: #6c757d;
+  color: var(--nord3);
+  opacity: 0.5;
   cursor: not-allowed;
-  opacity: 0.6;
 }
 
 .logout-btn {
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  min-height: var(--touch-target-size);
+  color: var(--nord11); /* Red */
 }
-
 .logout-btn:hover {
-  background: #c82333;
-  transform: translateY(-1px);
+  background-color: rgba(191, 97, 106, 0.15);
+  color: var(--nord11);
 }
 
-.logout-btn:active {
-  transform: translateY(0);
-}
-
-/* 自定义快速tooltip */
-.save-btn,
-.logout-btn,
-.view-mode-btn,
-.mobile-menu-btn {
-  position: relative;
-}
-
-.save-btn::after,
-.logout-btn::after,
-.view-mode-btn::after,
-.mobile-menu-btn::after {
+/* Tooltip Styles */
+.icon-btn::after {
   content: attr(data-tooltip);
   position: absolute;
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 0.5rem 0.75rem;
-  border-radius: 4px;
-  font-size: 0.875rem;
+  background-color: var(--nord1);
+  color: var(--nord6);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
   white-space: nowrap;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
   pointer-events: none;
   z-index: 1000;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 
-.save-btn::before,
-.logout-btn::before,
-.view-mode-btn::before,
-.mobile-menu-btn::before {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 4px solid transparent;
-  border-bottom-color: rgba(0, 0, 0, 0.8);
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s;
-  pointer-events: none;
-  z-index: 1000;
-  margin-top: 0.1rem;
-}
-
-.save-btn:hover::after,
-.logout-btn:hover::after,
-.view-mode-btn:hover::after,
-.mobile-menu-btn:hover::after {
+.icon-btn:hover::after {
   opacity: 1;
   visibility: visible;
   transition-delay: 0.5s;
-}
-
-.save-btn:hover::before,
-.logout-btn:hover::before,
-.view-mode-btn:hover::before,
-.mobile-menu-btn:hover::before {
-  opacity: 1;
-  visibility: visible;
-  transition-delay: 0.5s;
-}
-
-.view-mode-btn {
-  background: transparent;
-  color: #6c757d;
-  border: none;
-  border-radius: 4px;
-  padding: 0.5rem 0.75rem;
-  cursor: pointer;
-  font-size: 1rem;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  min-width: 40px;
-  justify-content: center;
-}
-
-.view-mode-btn:hover {
-  background: #dee2e6;
-  color: #495057;
-}
-
-.view-mode-btn.active {
-  background: #007bff;
-  color: white;
-  box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+  transform: translateX(-50%) translateY(0);
 }
 
 .editor-container {
-    display: flex;
-    width: 100%;
-    height: calc(100% - 60px);
-    transition: all 0.3s ease;
-}
-
-/* 编辑模式：只显示编辑区 */
-.editor-container.view-mode-edit .markdown-source {
-  flex: 1;
-  border-right: none;
-}
-
-/* 分屏模式：编辑区和预览区各占50% */
-.editor-container.view-mode-split .markdown-source {
-  flex: 0 0 50%;
-  border-right: 1px solid #d8dee9;
-}
-
-.editor-container.view-mode-split .preview {
-  flex: 0 0 50%;
-}
-
-/* 预览模式：只显示预览区 */
-.editor-container.view-mode-preview .preview {
-  flex: 1;
+  display: flex;
+  width: 100%;
+  height: calc(100% - 56px);
 }
 
 .markdown-source {
-  padding: 1em;
+  padding: 1.5rem;
   border: none;
   resize: none;
-  font-family: monospace;
+  font-family: 'Fira Code', monospace;
   font-size: 1rem;
-  line-height: 1.5;
+  line-height: 1.6;
   height: 100%;
   box-sizing: border-box;
-  background-color: #eceff4;
-  color: #2e3440;
+  background-color: #f8f9fa;
+  color: var(--nord0);
   outline: none;
   overflow-y: auto;
-  transition: all 0.3s ease;
 }
 
 .no-note-selected {
@@ -562,164 +672,105 @@ onBeforeUnmount(() => {
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: #999;
+  color: var(--nord3);
   font-size: 1.2rem;
   text-align: center;
   padding: 2rem;
 }
 
-/* 移动端适配 */
-@media (max-width: var(--mobile-breakpoint)) {
-  .container {
-    height: 100vh;
-    height: 100dvh;
-  }
-  
+/* Mobile & Responsive */
+@media (max-width: 768px) {
   .editor-header {
-    padding: var(--spacing-md);
+    padding: 0.5rem;
     justify-content: space-between;
   }
-  
-  .editor-controls {
-    gap: var(--spacing-md);
-    flex-wrap: wrap;
-  }
-  
-  .view-mode-buttons {
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm);
-  }
-  
-  .view-mode-btn {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: 1.1rem;
-    min-width: var(--touch-target-size);
-    min-height: var(--touch-target-size);
-  }
-  
-  .save-btn {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: 1.1rem;
-    min-width: var(--touch-target-size);
-    min-height: var(--touch-target-size);
-  }
-  
-  .logout-btn {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: 1.1rem;
-    min-width: var(--touch-target-size);
-    min-height: var(--touch-target-size);
-  }
-  
-  .markdown-source {
-    padding: var(--spacing-lg);
-    font-size: 1.1rem;
-    line-height: 1.6;
-    overflow-x: hidden;
-    word-wrap: break-word;
-    word-break: break-word;
-    white-space: pre-wrap;
-  }
-  
-  .no-note-selected {
-    font-size: 1.1rem;
-    padding: var(--spacing-xl) var(--spacing-xl);
-  }
-  
-  /* 移动端时隐藏调整器 */
   .resizer {
     display: none;
   }
 }
 
-/* 平板端适配 */
-@media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
-  .view-mode-btn {
-    padding: 0.6rem 0.8rem;
-    min-width: 42px;
-  }
-  
-  .markdown-source {
-    font-size: 1.05rem;
-  }
+/* Full View Adjustments */
+.editor-container.view-mode-edit .markdown-source,
+.editor-container.view-mode-preview .preview {
+  flex: 1;
 }
 
-/* 横屏模式优化 */
-@media (max-width: var(--mobile-breakpoint)) and (orientation: landscape) {
-  .editor-header {
-    padding: var(--spacing-sm) var(--spacing-md);
-    min-height: 50px;
+/* Split View Adjustments */
+.editor-container.view-mode-split .markdown-source {
+  flex: 0 0 50%;
+  border-right: 1px solid var(--nord4);
+}
+.editor-container.view-mode-split .preview {
+  flex: 0 0 50%;
+}
+
+/* 打印时的样式 */
+@media print {
+  /* 设置打印页面 */
+  @page {
+    size: A4;
+    margin: 15mm 20mm;
+  }
+
+  /* 全局重置所有容器 */
+  * {
+    overflow: visible !important;
+  }
+
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 隐藏所有非打印内容 */
+  .container > *:not(.main-content) {
+    display: none !important;
   }
   
-  .mobile-menu-btn {
-    padding: var(--spacing-sm);
-    font-size: 1.1rem;
+  .editor-header,
+  .markdown-source {
+    display: none !important;
   }
   
-  .editor-controls {
-    gap: var(--spacing-sm);
+  /* 确保容器不限制高度 */
+  .container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
   }
   
-  .view-mode-btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 1rem;
-  }
-  
-  .save-btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 1rem;
-    min-height: 40px;
-  }
-  
-  .logout-btn {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 1rem;
-    min-height: 40px;
+  .main-content {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
   }
   
   .editor-container {
-    height: calc(100% - 50px);
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  /* 显示打印区域 */
+  #print-area {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 }
 
-/* 触摸设备优化 */
-@media (hover: none) and (pointer: coarse) {
-  .save-btn:hover {
-    background: #28a745;
-    transform: none;
-  }
-  
-  .save-btn:active:not(:disabled) {
-    background: #218838;
-    transform: scale(0.95);
-  }
-  
-  .view-mode-btn:hover {
-    background: transparent;
-  }
-  
-  .view-mode-btn:active {
-    background: #dee2e6;
-    transform: scale(0.95);
-  }
-  
-  .mobile-menu-btn:hover {
-    background: #007bff;
-  }
-  
-  .mobile-menu-btn:active {
-    background: #0056b3;
-    transform: scale(0.95);
-  }
-  
-  .logout-btn:hover {
-    background: #dc3545;
-    transform: none;
-  }
-  
-  .logout-btn:active {
-    background: #c82333;
-    transform: scale(0.95);
-  }
-}
 </style>

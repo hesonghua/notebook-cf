@@ -148,6 +148,41 @@ const katexOptions = {
 const markedExtensions = {
   extensions: [
     {
+      name: 'pageBreak',
+      level: 'block',
+      start(src) {
+        const markers = ['---PAGEBREAK---', '<!-- PAGEBREAK -->'];
+        const indices = markers
+          .map(marker => src.indexOf(marker))
+          .filter(index => index !== -1);
+        
+        if (indices.length === 0) {
+          return;
+        }
+        
+        return Math.min(...indices);
+      },
+      tokenizer(src) {
+        const matches = [
+          /^---PAGEBREAK---\s*/,
+          /^<!-- PAGEBREAK -->\s*/
+        ];
+        
+        for (let i = 0; i < matches.length; i++) {
+          const match = src.match(matches[i]);
+          if (match) {
+            return {
+              type: 'pageBreak',
+              raw: match[0],
+            };
+          }
+        }
+      },
+      renderer(token) {
+        return '<div class="page-break"></div>';
+      }
+    },
+    {
       name: 'mermaid',
       level: 'block',
       start(src) {
@@ -355,6 +390,15 @@ const processRenderedContent = async () => {
   word-break: break-word;
 }
 
+/* 打印时移除高度限制 */
+@media print {
+  .preview {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+}
+
 :deep(h1),
 :deep(h2),
 :deep(h3),
@@ -507,6 +551,15 @@ const processRenderedContent = async () => {
   border: none;
   border-top: 2px solid #eaecef;
   margin: 2em 0;
+}
+
+/* 强制分页标记 - 屏幕上不可见 */
+:deep(.page-break) {
+  display: none;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
 }
 
 :deep(a) {
@@ -770,6 +823,214 @@ const processRenderedContent = async () => {
 @media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
   :deep(.mermaid) {
     padding: 1.3em;
+  }
+}
+
+/* 打印样式 */
+@media print {
+  /* 全局打印设置 */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .preview {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 隐藏复制按钮 */
+  :deep(.copy-button) {
+    display: none !important;
+  }
+
+  /* 代码块打印优化 - 允许长代码块分页 */
+  :deep(pre) {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    /* 允许长代码块分页 */
+    page-break-inside: auto;
+    background-color: #f6f8fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    /* 允许代码块前后分页 */
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  /* 标题避免分页 */
+  :deep(h1),
+  :deep(h2),
+  :deep(h3),
+  :deep(h4),
+  :deep(h5),
+  :deep(h6) {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    /* 标题前允许分页 */
+    page-break-before: auto;
+  }
+  
+  /* 只对标题后的第一个段落或列表避免分页 */
+  :deep(h1 + p),
+  :deep(h2 + p),
+  :deep(h3 + p),
+  :deep(h4 + p),
+  :deep(h5 + p),
+  :deep(h6 + p),
+  :deep(h1 + ul),
+  :deep(h2 + ul),
+  :deep(h3 + ul),
+  :deep(h4 + ul),
+  :deep(h5 + ul),
+  :deep(h6 + ul),
+  :deep(h1 + ol),
+  :deep(h2 + ol),
+  :deep(h3 + ol),
+  :deep(h4 + ol),
+  :deep(h5 + ol),
+  :deep(h6 + ol) {
+    page-break-before: avoid;
+  }
+
+  /* 段落优化 - 允许长段落分页 */
+  :deep(p) {
+    orphans: 2;
+    widows: 2;
+    /* 允许段落分页 */
+    page-break-inside: auto;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  /* 表格打印优化 - 大表格允许分页 */
+  :deep(table) {
+    page-break-inside: auto;
+    border-collapse: collapse !important;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  :deep(th),
+  :deep(td) {
+    border: 1px solid #dfe2e5 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    /* 避免单元格内容被截断 */
+    page-break-inside: avoid;
+  }
+
+  :deep(th) {
+    background-color: #f6f8fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 表格行优化 */
+  :deep(tr) {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* 图片打印优化 */
+  :deep(img) {
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
+    display: block;
+  }
+
+  /* 列表打印优化 - 长列表允许分页 */
+  :deep(ul),
+  :deep(ol) {
+    page-break-inside: auto;
+    /* 允许列表前后分页 */
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  :deep(li) {
+    /* 避免列表项内部分页 */
+    page-break-inside: avoid;
+    /* 允许列表项之间分页 */
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+  
+  /* 嵌套列表优化 - 保持嵌套列表与父项在一起 */
+  :deep(li > ul),
+  :deep(li > ol) {
+    page-break-before: avoid;
+  }
+
+  /* 引用块打印优化 - 长引用允许分页 */
+  :deep(blockquote) {
+    page-break-inside: auto;
+    page-break-before: auto;
+    page-break-after: auto;
+    background-color: #f6f8fa !important;
+    border-left: 4px solid #dfe2e5 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Mermaid 图表打印优化 */
+  :deep(.mermaid) {
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 强制分页标记 - 打印时强制分页 */
+  :deep(.page-break) {
+    display: block !important;
+    page-break-after: always !important;
+    page-break-before: auto !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    visibility: hidden !important;
+  }
+
+  /* 水平线打印优化 */
+  :deep(hr) {
+    border-top: 2px solid #eaecef !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-after: avoid;
+  }
+
+  /* 链接打印优化 */
+  :deep(a) {
+    color: #0366d6 !important;
+    text-decoration: underline !important;
+  }
+
+  /* 行内代码打印优化 */
+  :deep(code) {
+    background-color: #f6f8fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 数学公式打印优化 */
+  :deep(.katex-display) {
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
   }
 }
 </style>

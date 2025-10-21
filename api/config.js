@@ -5,6 +5,7 @@ async function configHandler(request, env) {
       { status: 405 }
     );
   }
+  const registerEnabled = env.REGISTER_ENABLED === 'true';
   const turnstileEnabled = env.TURNSTILE_ENABLED === 'true';
   const turnstileSiteKey = turnstileEnabled ? env.TURNSTILE_SITE_KEY : '';
   
@@ -12,6 +13,7 @@ async function configHandler(request, env) {
   const config = {
     turnstileSiteKey,
     turnstileEnabled,
+    registerEnabled,
   };
 
   return new Response(JSON.stringify(config), {

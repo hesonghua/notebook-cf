@@ -12,8 +12,6 @@ const props = defineProps({
   isSidebarCollapsed: Boolean,
 });
 
-const emit = defineEmits(['toggle-sidebar']);
-
 const expandedCategories = ref(new Set());
 const notesListRef = ref(null);
 const editingCategoryId = ref(null);
@@ -46,17 +44,11 @@ function onNoteDrop(event) {
   noteStore.updateNoteCategory({ noteId, newCategoryId });
 }
 
-function handleScroll(event) {
-  // 滚动处理函数，目前没有分页功能
-}
-
 onMounted(() => {
-  notesListRef.value?.addEventListener('scroll', handleScroll);
   document.addEventListener('click', hideContextMenu);
 });
 
 onBeforeUnmount(() => {
-  notesListRef.value?.removeEventListener('scroll', handleScroll);
   document.removeEventListener('click', hideContextMenu);
 });
 
@@ -110,20 +102,9 @@ async function finishRename(category) {
         <input
           type="text"
           class="search-input"
-          placeholder="Search notes..."
+          placeholder="搜索笔记..."
           v-model="noteStore.searchQuery"
         />
-        <div class="header-controls">
-          <button class="action-btn toggle-btn" @click="emit('toggle-sidebar')" title="Toggle Sidebar">
-            <span v-if="props.isSidebarCollapsed">▶</span>
-            <span v-else>◀</span>
-          </button>
-          <div class="sidebar-actions">
-            <button class="action-btn" @click="noteStore.handleAddNote" title="New Note">📄</button>
-            <button class="action-btn" @click="categoryStore.handleAddCategory" title="New Category">📁</button>
-            <button class="action-btn" @click="noteStore.forceRefreshNotes(); categoryStore.fetchCategories()" title="Refresh">🔄</button>
-          </div>
-        </div>
     </div>
     <div class="notes-list" ref="notesListRef">
       <!-- Search Results -->
@@ -142,8 +123,8 @@ async function finishRename(category) {
         <!-- Categories -->
         <div v-for="category in categoryStore.categories" :key="category.id" class="category-item">
             <div class="category-header" @click="toggleCategory(category.id)" @contextmenu.prevent="showContextMenu($event, category)">
-              <span class="category-toggle">
-                {{ expandedCategories.has(category.id) ? '▼' : '▶' }}
+              <span class="category-toggle" :class="{ 'is-expanded': expandedCategories.has(category.id) }">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
               </span>
               <input
                 v-if="editingCategoryId === category.id"
@@ -232,17 +213,25 @@ async function finishRename(category) {
 </template>
 
 <style scoped>
+/* Nord Theme Colors */
+:root {
+  --nord0: #2e3440; --nord1: #3b4252; --nord2: #434c5e; --nord3: #4c566a;
+  --nord4: #d8dee9; --nord5: #e5e9f0; --nord6: #eceff4;
+  --nord7: #8fbcbb; --nord8: #88c0d0; --nord9: #81a1c1; --nord10: #5e81ac;
+  --nord11: #bf616a; --nord12: #d08770; --nord13: #ebcb8b; --nord14: #a3be8c;
+  --nord15: #b48ead;
+}
+
 .sidebar {
-  min-width: 200px;
+  min-width: 280px;
   max-width: 600px;
-  background-color: #f8f9fa;
-  color: #343a40;
-  border-right: 1px solid #dee2e6;
+  background-color: var(--nord6);
+  color: var(--nord1);
+  border-right: 1px solid var(--nord4);
   display: flex;
   flex-direction: column;
   height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  transition: min-width 0.3s ease;
+  transition: min-width 0.3s ease, transform 0.3s ease;
 }
 
 .sidebar-collapsed {
@@ -259,168 +248,172 @@ async function finishRename(category) {
     justify-content: center;
 }
 
-.toggle-btn {
-  font-size: 1em;
-  padding: 0.3rem;
-}
-
-/* 移动端侧边栏样式 */
-.sidebar-mobile {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: var(--sidebar-width-mobile);
-  height: 100vh;
-  height: 100dvh;
-  z-index: 999;
-  transform: translateX(-100%);
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  min-width: var(--sidebar-width-mobile);
-  max-width: var(--sidebar-width-mobile);
-}
-
-.sidebar-mobile.sidebar-visible {
-  transform: translateX(0);
-}
 .sidebar-header {
-    padding: 12px 15px;
-    border-bottom: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--nord4);
+  flex-shrink: 0;
 }
-.header-controls {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+
 .search-input {
   width: 100%;
-  padding: 8px 12px;
-  background-color: #ffffff;
-  border: 1px solid #ced4da;
-  color: #495057;
-  border-radius: 6px;
+  padding: 0.6rem 0.9rem;
+  background-color: var(--nord5);
+  border: 1px solid var(--nord4);
+  color: var(--nord1);
+  border-radius: 8px;
   box-sizing: border-box;
-  margin-bottom: 10px;
-  font-size: 14px;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+.search-input::placeholder {
+  color: var(--nord3);
 }
 .search-input:focus {
-  border-color: #80bdff;
+  border-color: var(--nord9);
   outline: 0;
-  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+  box-shadow: 0 0 0 3px rgba(129, 161, 193, 0.2);
+  background-color: white;
 }
-.sidebar-actions {
-  display: flex;
-  justify-content: space-around;
-  flex-grow: 1;
-  margin-left: 10px;
-}
-.action-btn {
-  background: none;
-  border: none;
-  color: #6c757d;
-  font-size: 1.5em;
-  cursor: pointer;
-  transition: color 0.2s;
-  padding: 0.5rem;
-  border-radius: 6px;
-  min-width: var(--touch-target-size);
-  min-height: var(--touch-target-size);
+
+.header-controls {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+}
+
+.sidebar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.action-btn {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  background-color: transparent;
+  border: none;
+  color: var(--nord3);
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 .action-btn:hover {
-  color: #343a40;
-  background-color: #e9ecef;
+  color: var(--nord0);
+  background-color: var(--nord5);
 }
 .action-btn:active {
   transform: scale(0.95);
 }
+.toggle-btn {
+  transform: rotate(180deg);
+}
+.sidebar-collapsed .toggle-btn {
+  transform: rotate(0deg);
+}
+
 .notes-list {
   overflow-y: auto;
   flex: 1;
-  padding: 8px;
+  padding: 0.5rem;
 }
+
 .category-item {
-  margin-bottom: 2px;
+  margin-bottom: 0.125rem;
 }
+
 .category-header {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 4px 10px;
+  padding: 0.5rem 0.75rem;
   border-radius: 6px;
-  font-weight: 600;
-  position: relative;
-  color: #495057;
-  transition: background-color 0.2s;
+  font-weight: 500;
+  color: var(--nord2);
+  transition: background-color 0.2s ease;
 }
-/* .category-header:hover {
-  background-color: #e9ecef;
-} */
+.category-header:hover {
+  background-color: var(--nord5);
+}
+
 .category-toggle {
-  margin-right: 8px;
-  width: 1em;
-  display: inline-block;
-  font-size: 0.7em;
-  color: #6c757d;
+  margin-right: 0.5rem;
+  color: var(--nord9);
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
 }
+.category-toggle.is-expanded {
+  transform: rotate(90deg);
+}
+
 .category-name {
   flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
 .note-count {
   font-size: 0.8em;
-  color: #adb5bd;
-  margin-left: 8px;
-  font-weight: 500;
+  color: var(--nord3);
+  margin-left: 0.5rem;
+  font-weight: 400;
 }
+
 .uncategorized-section {
-  margin-top: 12px;
+  margin-top: 0.75rem;
 }
 .uncategorized-header {
   display: flex;
   align-items: center;
-  padding: 6px 10px;
-  font-weight: 600;
-  color: #6c757d;
+  padding: 0.5rem 0.75rem;
+  font-weight: 500;
+  color: var(--nord3);
 }
 .uncategorized-label {
   flex-grow: 1;
 }
+
 .category-menu {
   position: fixed;
-  background-color: #ffffff;
-  border: 1px solid #dee2e6;
-  border-radius: 6px;
+  background-color: white;
+  border: 1px solid var(--nord5);
+  border-radius: 8px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  padding: 5px 0;
-  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 0.5rem;
+  min-width: 140px;
 }
 .category-menu button {
   background: none;
   border: none;
-  color: #343a40;
-  padding: 8px 15px;
+  color: var(--nord1);
+  padding: 0.6rem 1rem;
   text-align: left;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 0.9rem;
+  border-radius: 6px;
 }
 .category-menu button:hover {
-  background-color: #f1f3f5;
-} 
+  background-color: var(--nord6);
+}
+
 .rename-input {
   flex-grow: 1;
-  background-color: #fff;
-  border: 1px solid #80bdff;
-  color: #495057;
-  border-radius: 4px;
-  padding: 2px 6px;
+  background-color: white;
+  border: 1px solid var(--nord9);
+  color: var(--nord1);
+  border-radius: 5px;
+  padding: 0.125rem 0.375rem;
   font-size: 1em;
-  font-weight: 600;
+  font-weight: 500;
+  outline: none;
 }
+
 .category-drop-zone {
   min-height: 10px;
   border-radius: 6px;
@@ -428,138 +421,34 @@ async function finishRename(category) {
   margin: 2px 0;
 }
 .category-drop-zone:hover {
-  background-color: rgba(0, 123, 255, 0.05);
+  background-color: rgba(129, 161, 193, 0.1);
 }
+
 .category-notes-list {
-  padding-left: 1em;
+  padding-left: 1.5rem;
   min-height: 10px;
 }
-.notes-in-category .note-item {
-  padding-left: 1em;
-}
-
-
-
-
-
-
-
-
-
-
-
 
 .loading-indicator {
   padding: 1em;
   text-align: center;
-  color: #6c757d;
+  color: var(--nord3);
 }
 
-/* 移动端适配 */
-@media (max-width: var(--mobile-breakpoint)) {
-  .sidebar-header {
-    padding: var(--spacing-lg) var(--spacing-xl);
-  }
-  
-  .search-input {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: 16px; /* 防止iOS缩放 */
-    margin-bottom: var(--spacing-md);
-  }
-  
-  .sidebar-actions {
-    gap: var(--spacing-sm);
-  }
-  
-  .action-btn {
-    font-size: 1.3em;
-    padding: var(--spacing-md);
-  }
-  
-  .notes-list {
-    padding: var(--spacing-md);
-  }
-  
-  .category-header {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: 1.05rem;
-  }
-  
-  .category-toggle {
-    margin-right: var(--spacing-md);
-    font-size: 0.8em;
-  }
-  
-  /* NoteItem组件样式已移至单独的NoteItem.vue文件 */
-  
-  .category-menu {
-    padding: var(--spacing-sm) 0;
-    min-width: 120px;
-  }
-  
-  .category-menu button {
-    padding: var(--spacing-md) var(--spacing-xl);
-    font-size: 1rem;
-  }
-  
-  .menu-btn {
-    font-size: 1.4em;
-    padding: var(--spacing-sm);
-    display: inline-block; /* 移动端始终显示菜单按钮 */
-  }
-  
-  .uncategorized-header {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-size: 1.05rem;
-  }
-  
-  .note-count {
-    font-size: 0.9em;
-  }
+/* Mobile Styles */
+.sidebar-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 80vw;
+  max-width: 320px;
+  height: 100%;
+  z-index: 999;
+  transform: translateX(-100%);
+  box-shadow: 2px 0 15px rgba(0,0,0,0.1);
+  min-width: auto;
 }
-
-/* 平板端适配 */
-@media (min-width: 769px) and (max-width: var(--tablet-breakpoint)) {
-  .sidebar-header {
-    padding: var(--spacing-md) var(--spacing-lg);
-  }
-  
-  .search-input {
-    padding: var(--spacing-sm) var(--spacing-md);
-    font-size: 15px;
-  }
-  
-  /* NoteItem组件样式已移至单独的NoteItem.vue文件 */
-  
-  .category-header {
-    padding: var(--spacing-sm) var(--spacing-md);
-  }
-}
-
-/* 触摸设备优化 */
-@media (hover: none) and (pointer: coarse) {
-  .action-btn:hover {
-    background-color: initial;
-  }
-  
-  
-  .category-header:hover {
-    background-color: initial;
-  }
-  
-  .delete-note-btn:hover {
-    color: #dc3545;
-  }
-  
-  /* 触摸设备上始终显示交互元素 */
-  .delete-note-btn {
-    display: flex !important;
-    opacity: 0.6;
-  }
-  
-  .menu-btn {
-    display: inline-block !important;
-    opacity: 0.8;
-  }
+.sidebar-mobile.sidebar-visible {
+  transform: translateX(0);
 }
 </style>

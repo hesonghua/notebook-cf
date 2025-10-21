@@ -152,3 +152,35 @@ export async function deleteNote(id) {
   const result = await response.json();
   if (!result.success) throw new Error(result.message || 'Failed to delete note');
 }
+
+// --- Image Upload API ---
+
+export async function uploadImage(file) {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const token = localStorage.getItem('token');
+  const headers = {};
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch('/api/upload-image', {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+    throw new Error('Session expired or invalid.');
+  }
+
+  if (!response.ok) {
+    const data = await response.json();
+    throw new Error(data.message || 'Failed to upload image');
+  }
+
+  return response.json();
+}

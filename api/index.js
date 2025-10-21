@@ -5,6 +5,7 @@ import registerHandler from './register.js';
 import notesHandler from './notes.js';
 import categoriesHandler from './categories.js';
 import configHandler from './config.js';
+import uploadImageHandler from './upload-image.js';
 
 const app = new Hono().basePath('/api');
 
@@ -32,6 +33,7 @@ app.all('/register', createHandler(registerHandler));
 app.all('/notes', createHandler(notesHandler));
 app.all('/categories', createHandler(categoriesHandler));
 app.all('/config', createHandler(configHandler));
+app.all('/upload-image', createHandler(uploadImageHandler));
 
 // 404 处理
 app.notFound((c) => {
