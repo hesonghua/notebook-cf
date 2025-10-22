@@ -1,35 +1,61 @@
 @import './base.css';
+@import './responsive.css';
+@import './markdown.css';
+@import './print.css';
 
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+/* Common Icon Button Style */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  border: 1px solid transparent;
+  color: var(--nord3);
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+.icon-btn:hover:not(:disabled) {
+  background-color: var(--nord4);
+  color: var(--nord0);
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+.icon-btn:active:not(:disabled) {
+  transform: scale(0.95);
 }
 
-@media (min-width: 1024px) {
-  body {
-    display: flex;
-    place-items: center;
-  }
+.icon-btn svg {
+  stroke-width: 2;
+}
 
-  #app {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    padding: 0 2rem;
-  }
+/* Tooltip Styles */
+.icon-btn::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--nord1);
+  color: var(--nord6);
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+  margin-top: 0.75rem;
+}
+
+.icon-btn:hover::after {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0.5s;
+  transform: translateX(-50%) translateY(0);
 }

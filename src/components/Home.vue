@@ -55,9 +55,15 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
           </button>
      
-          <button v-if="noteStore.selectedNote && !isMobile" class="icon-btn" @click="handlePrint" data-tooltip="打印/导出PDF">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
-          </button>
+          <div v-if="noteStore.selectedNote && !isMobile" class="print-btn-container">
+            <button 
+              class="icon-btn" 
+              @click="handlePrint"
+              data-tooltip="打印"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+            </button>
+          </div>
           <button class="icon-btn logout-btn" @click="logout" data-tooltip="注销">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           </button>
@@ -113,6 +119,9 @@ let isSyncing = false;
 const sidebarWidth = ref(280);
 const isResizing = ref(false);
 const viewMode = ref('preview'); // 'edit', 'split', 'preview' - 默认为预览模式
+
+// 打印菜单相关状态
+let isPrinting = false; // 添加一个标志位防止重复打印
 
 // 移动端相关状态
 const isMobile = ref(false);
@@ -315,9 +324,11 @@ function logout() {
   router.push('/login');
 }
 
-
 // 打印功能
 function handlePrint() {
+  if (isPrinting) return; // 如果正在打印，则直接返回
+  isPrinting = true;
+
   // 保存原始标题
   const originalTitle = document.title;
   
@@ -330,10 +341,13 @@ function handlePrint() {
   window.print();
   
   // 打印对话框关闭后恢复原始标题
-  // 使用 setTimeout 确保在打印对话框关闭后执行
-  setTimeout(() => {
-    document.title = originalTitle;
-  }, 100);
+  // 使用 requestAnimationFrame 确保在打印对话框出现后再设置
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      document.title = originalTitle;
+      isPrinting = false; // 打印结束后重置标志位
+    }, 100);
+  });
 }
 
 // 图片上传相关函数
@@ -427,6 +441,7 @@ function handleDragOver(event) {
   event.preventDefault();
 }
 
+
 onMounted(() => {
   window.addEventListener('keydown', handleKeyDown);
   window.addEventListener('resize', checkMobile);
@@ -450,26 +465,6 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-/* Nord Theme Colors */
-:root {
-  --nord0: #2e3440; /* Dark text, backgrounds */
-  --nord1: #3b4252;
-  --nord2: #434c5e;
-  --nord3: #4c566a; /* Comments, secondary text */
-  --nord4: #d8dee9; /* UI elements, borders */
-  --nord5: #e5e9f0;
-  --nord6: #eceff4; /* Backgrounds, primary text */
-  --nord7: #8fbcbb; /* Teal */
-  --nord8: #88c0d0; /* Light blue */
-  --nord9: #81a1c1; /* Blue */
-  --nord10: #5e81ac; /* Darker blue */
-  --nord11: #bf616a; /* Red */
-  --nord12: #d08770; /* Orange */
-  --nord13: #ebcb8b; /* Yellow */
-  --nord14: #a3be8c; /* Green */
-  --nord15: #b48ead; /* Purple */
-}
-
 .container {
   display: flex;
   height: 100vh;
@@ -542,34 +537,6 @@ onBeforeUnmount(() => {
   margin: 0 0.5rem;
 }
 
-/* Common Icon Button Style */
-.icon-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: transparent;
-  border: 1px solid transparent;
-  color: var(--nord3);
-  padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  position: relative;
-}
-
-.icon-btn:hover:not(:disabled) {
-  background-color: var(--nord4);
-  color: var(--nord0);
-}
-
-.icon-btn:active:not(:disabled) {
-  transform: scale(0.95);
-}
-
-.icon-btn svg {
-  stroke-width: 2;
-}
-
 .mobile-menu-btn {
   color: var(--nord1);
 }
@@ -616,33 +583,40 @@ onBeforeUnmount(() => {
   color: var(--nord11);
 }
 
-/* Tooltip Styles */
-.icon-btn::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--nord1);
-  color: var(--nord6);
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.2s, visibility 0.2s, transform 0.2s;
-  pointer-events: none;
-  z-index: 1000;
-  margin-top: 0.75rem;
+.print-btn-container {
+  position: relative;
 }
 
-.icon-btn:hover::after {
-  opacity: 1;
-  visibility: visible;
-  transition-delay: 0.5s;
-  transform: translateX(-50%) translateY(0);
+.print-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.5rem;
+  background-color: var(--nord6);
+  border: 1px solid var(--nord4);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  z-index: 1001;
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem;
+  width: 120px;
+}
+
+.print-menu button {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--nord1);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.print-menu button:hover {
+  background-color: var(--nord5);
 }
 
 .editor-container {
@@ -704,68 +678,5 @@ onBeforeUnmount(() => {
   flex: 0 0 50%;
 }
 
-/* 打印时的样式 */
-@media print {
-  /* 设置打印页面 */
-  @page {
-    size: A4;
-    margin: 15mm 20mm;
-  }
-
-  html, body {
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  /* 隐藏所有非打印内容 */
-  .container > *:not(.main-content) {
-    display: none !important;
-  }
-  
-  .editor-header,
-  .markdown-source {
-    display: none !important;
-  }
-  
-  /* 确保容器不限制高度 */
-  .container {
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    display: block !important;
-  }
-  
-  .main-content {
-    display: block !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    flex: none !important;
-  }
-  
-  .editor-container {
-    display: block !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-  
-  /* 显示打印区域 */
-  #print-area {
-    display: block !important;
-    visibility: visible !important;
-    position: static !important;
-    width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-}
 
 </style>

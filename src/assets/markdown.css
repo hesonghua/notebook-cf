@@ -1,0 +1,214 @@
+.preview {
+  width: 100%;
+  padding: 1em;
+  overflow-y: auto;
+  overflow-x: hidden;
+  height: 100%;
+  box-sizing: border-box;
+  line-height: 1.6;
+  font-size: 1rem;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.preview h1,
+.preview h2,
+.preview h3,
+.preview h4,
+.preview h5,
+.preview h6 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.preview h1 {
+  font-size: 1.8em;
+  border-bottom: 2px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.preview h2 {
+  font-size: 1.5em;
+  border-bottom: 1px solid #eaecef;
+  padding-bottom: 0.3em;
+}
+
+.preview h3 {
+  font-size: 1.3em;
+}
+
+.preview h4 {
+  font-size: 1.1em;
+}
+
+.preview p {
+  margin-bottom: 1em;
+  line-height: 1.7;
+}
+
+.preview ul,
+.preview ol {
+  margin-bottom: 1em;
+  padding-left: 2em;
+}
+
+.preview li {
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+
+.preview blockquote {
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  border-left: 4px solid #dfe2e5;
+  background-color: #f6f8fa;
+  color: #6a737d;
+}
+
+.preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.preview th,
+.preview td {
+  border: 1px solid #dfe2e5;
+  padding: 0.6em 1em;
+  text-align: left;
+}
+
+.preview th {
+  background-color: #f6f8fa;
+  font-weight: 600;
+}
+
+.preview pre {
+  background-color: #282c34;
+  color: #abb2bf;
+  padding: 1em;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 1em 0;
+  position: relative;
+  font-size: 0.9em;
+  line-height: 1.4;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.preview code {
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Courier New', monospace;
+  background-color: #f6f8fa;
+  padding: 0.2em 0.4em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  word-wrap: break-word;
+  word-break: break-all;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.preview pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+.preview .copy-button {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  background: #444;
+  color: white;
+  border: none;
+  padding: 0.4em 0.8em;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.8em;
+  opacity: 0;
+  transition: all 0.3s;
+  font-family: inherit;
+}
+
+.preview pre:hover .copy-button {
+  opacity: 1;
+}
+
+.preview .copy-button:hover {
+  background: #555;
+  transform: scale(1.05);
+}
+
+.preview img {
+  max-width: 100%;
+  width: 100%;
+  height: auto;
+  max-height: 70vh;
+  border-radius: 6px;
+  margin: 1em 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  object-fit: contain;
+  box-sizing: border-box;
+}
+
+.preview hr {
+  border: none;
+  border-top: 2px solid #eaecef;
+  margin: 2em 0;
+}
+
+/* 强制分页标记 - 屏幕上不可见 */
+.preview .page-break {
+  display: none;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.preview a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.preview a:hover {
+  text-decoration: underline;
+}
+
+/* Mermaid 图表样式优化 */
+.preview .mermaid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2em 0;
+  padding: 1.5em;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  min-height: 100px;
+  background: transparent; /* 让 Mermaid 自己控制背景 */
+}
+
+.preview .mermaid svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+/* 优化 Mermaid 图表中的文字 */
+.preview .mermaid .nodeLabel,
+.preview .mermaid .edgeLabel,
+.preview .mermaid .labelText,
+.preview .mermaid text {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+}

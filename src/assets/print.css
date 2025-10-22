@@ -1,0 +1,311 @@
+/* 打印样式 - 全局重置 */
+@media print {
+  html, body, #app {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  body {
+    min-height: 0 !important;
+  }
+
+  #app {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  *:not(.katex-display):not(.katex-display *):not(.katex):not(.katex *) {
+    overflow: visible !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Home.vue 打印样式 */
+  @page {
+    size: A4;
+    margin: 15mm 20mm;
+  }
+
+  /* 隐藏所有非打印内容 */
+  .container > *:not(.main-content) {
+    display: none !important;
+  }
+  
+  .editor-header,
+  .markdown-source {
+    display: none !important;
+  }
+  
+  /* 确保容器不限制高度 */
+  .container {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+  
+  .main-content {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    flex: none !important;
+  }
+  
+  .editor-container {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  
+  /* 显示打印区域 */
+  #print-area, .preview {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  /* MarkdownPreview.vue 打印样式 */
+
+  .preview .copy-button {
+    display: none !important;
+  }
+
+  .preview pre {
+    white-space: pre-wrap !important;
+    word-wrap: break-word !important;
+    page-break-inside: auto;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  .preview h1,
+  .preview h2,
+  .preview h3,
+  .preview h4,
+  .preview h5,
+  .preview h6 {
+    page-break-after: avoid;
+    page-break-inside: avoid;
+    page-break-before: auto;
+  }
+  
+  .preview h1 + p,
+  .preview h2 + p,
+  .preview h3 + p,
+  .preview h4 + p,
+  .preview h5 + p,
+  .preview h6 + p,
+  .preview h1 + ul,
+  .preview h2 + ul,
+  .preview h3 + ul,
+  .preview h4 + ul,
+  .preview h5 + ul,
+  .preview h6 + ul,
+  .preview h1 + ol,
+  .preview h2 + ol,
+  .preview h3 + ol,
+  .preview h4 + ol,
+  .preview h5 + ol,
+  .preview h6 + ol {
+    page-break-before: avoid;
+  }
+
+  .preview p {
+    orphans: 2;
+    widows: 2;
+    page-break-inside: auto;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  .preview table {
+    page-break-inside: auto;
+    border-collapse: collapse !important;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  .preview th,
+  .preview td {
+    border: 1px solid #dfe2e5 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-inside: avoid;
+  }
+
+  .preview th {
+    background-color: #f6f8fa !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .preview tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  .preview img {
+    max-width: 100% !important;
+    max-height: 90vh !important;
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
+    display: block;
+  }
+
+  .preview ul,
+  .preview ol {
+    page-break-inside: auto;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+
+  .preview li {
+    page-break-inside: avoid;
+    page-break-before: auto;
+    page-break-after: auto;
+  }
+  
+  .preview li > ul,
+  .preview li > ol {
+    page-break-before: avoid;
+  }
+
+  .preview blockquote {
+    page-break-inside: auto;
+    page-break-before: auto;
+    page-break-after: auto;
+    background-color: #f6f8fa !important;
+    border-left: 4px solid #dfe2e5 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .preview .mermaid {
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .preview .page-break {
+    display: block !important;
+    page-break-after: always !important;
+    page-break-before: auto !important;
+    height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    visibility: hidden !important;
+  }
+
+  .preview hr {
+    border-top: 2px solid #eaecef !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    page-break-after: avoid;
+  }
+
+  .preview a {
+    color: #0366d6 !important;
+    text-decoration: underline !important;
+  }
+
+  .preview code {
+    background-color: transparent !important;
+  }
+
+  .preview .katex-display {
+    page-break-inside: avoid;
+    page-break-before: avoid;
+    page-break-after: avoid;
+  }
+
+  /* 所见即所得打印样式 - 代码高亮 */
+  .preview .hljs {
+    color: #abb2bf !important;
+    background: #282c34 !important;
+  }
+  .preview .hljs-comment,
+  .preview .hljs-quote {
+    color: #5c6370 !important;
+    font-style: italic !important;
+  }
+  .preview .hljs-doctag,
+  .preview .hljs-keyword,
+  .preview .hljs-formula {
+    color: #c678dd !important;
+  }
+  .preview .hljs-section,
+  .preview .hljs-name,
+  .preview .hljs-selector-tag,
+  .preview .hljs-deletion,
+  .preview .hljs-subst {
+    color: #e06c75 !important;
+  }
+  .preview .hljs-literal {
+    color: #56b6c2 !important;
+  }
+  .preview .hljs-string,
+  .preview .hljs-regexp,
+  .preview .hljs-addition,
+  .preview .hljs-attribute,
+  .preview .hljs-meta .hljs-string {
+    color: #98c379 !important;
+  }
+  .preview .hljs-attr,
+  .preview .hljs-variable,
+  .preview .hljs-template-variable,
+  .preview .hljs-type,
+  .preview .hljs-selector-class,
+  .preview .hljs-selector-attr,
+  .preview .hljs-selector-pseudo,
+  .preview .hljs-number {
+    color: #d19a66 !important;
+  }
+  .preview .hljs-symbol,
+  .preview .hljs-bullet,
+  .preview .hljs-link,
+  .preview .hljs-meta,
+  .preview .hljs-selector-id,
+  .preview .hljs-title {
+    color: #61aeee !important;
+  }
+  .preview .hljs-built_in,
+  .preview .hljs-title.class_,
+  .preview .hljs-class .hljs-title {
+    color: #e6c07b !important;
+  }
+  .preview .hljs-emphasis {
+    font-style: italic !important;
+  }
+  .preview .hljs-strong {
+    font-weight: bold !important;
+  }
+  .preview .hljs-link {
+    text-decoration: underline !important;
+  }
+}

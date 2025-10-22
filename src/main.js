@@ -4,7 +4,7 @@ import { useConfigStore } from './stores/configStore'
 
 import App from './App.vue'
 import router from './router'
-import './style.css'
+import './assets/main.css'
 import mitt from 'mitt';
 
 const app = createApp(App)
