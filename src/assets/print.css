@@ -7,6 +7,7 @@
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
+    background-color: white !important;
   }
 
   body {
@@ -51,6 +52,7 @@
     max-height: none !important;
     overflow: visible !important;
     display: block !important;
+    background-color: white !important;
   }
   
   .main-content {
