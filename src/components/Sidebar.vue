@@ -54,13 +54,14 @@ onBeforeUnmount(() => {
 
 async function handleDeleteCategory(category) {
   const confirmed = confirm(`确定要删除分类 "${category.name}" 吗？该分类下的所有日记将被移动到未分类。`);
-  if (!confirmed) return;
-  
-  try {
-    await categoryStore.deleteCategoryAndMoveNotes(category);
-  } catch (error) {
-    console.error('删除分类失败:', error);
-    alert('删除分类失败，请重试');
+  hideContextMenu();
+  if (confirmed) {
+    try {
+      await categoryStore.deleteCategoryAndMoveNotes(category);
+    } catch (error) {
+      console.error('删除分类失败:', error);
+      alert('删除分类失败，请重试');
+    }
   }
 }
 

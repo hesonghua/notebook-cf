@@ -25,8 +25,6 @@ const compiledMarkdown = computed(() => {
 
   const result = marked(source);
 
-  console.log(result);
-
   return result;
 })
 
