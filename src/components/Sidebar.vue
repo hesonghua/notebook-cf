@@ -205,7 +205,7 @@ async function finishRename(category) {
     </div>
 
     <!-- Context Menu -->
-    <div v-if="contextMenu.visible" class="category-menu" :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }">
+    <div v-if="contextMenu.visible" class="category-menu" :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }" @click.stop>
       <button @click="startRename(contextMenu.category)">Rename</button>
       <button @click="handleDeleteCategory(contextMenu.category)">Delete</button>
     </div>

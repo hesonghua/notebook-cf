@@ -186,6 +186,7 @@ onBeforeUnmount(() => {
   align-items: center;
   justify-content: space-between;
   color: var(--nord1);
+  padding-right: 1.0rem;
 }
 
 .context-menu li:hover {
@@ -212,7 +213,7 @@ onBeforeUnmount(() => {
 .context-menu .submenu {
   position: absolute;
   top: -0.5rem;
-  left: 100%;
+  left: 99%;
   background: white;
   border: 1px solid var(--nord5);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -220,7 +221,6 @@ onBeforeUnmount(() => {
   padding: 0.5rem;
   display: none;
   min-width: 150px;
-  margin-left: 0.25rem;
 }
 
 .context-menu .has-submenu:hover .submenu {
