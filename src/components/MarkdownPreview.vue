@@ -20,7 +20,6 @@ defineExpose({
 
 // 编译 Markdown
 const compiledMarkdown = computed(() => {
-    debugger;
   const source = props.selectedNote.content || '';
 
   const result = marked(source);
