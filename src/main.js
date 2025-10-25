@@ -117,8 +117,8 @@ const markedExtensions = {
       },
       tokenizer(src) {
         const matches = [
-          /^\$\$([^$]+?)\$\$/,
-          /^\\\[([^$]+?)\\\]/
+          /^\s*\$\$([^$]+?)\$\$/,
+          /^\s*\\\[([^$]+?)\\\]/
         ];
 
         for (let i = 0; i < matches.length; i++) {
