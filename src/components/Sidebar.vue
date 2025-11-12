@@ -95,6 +95,22 @@ async function finishRename(category) {
   editingCategoryId.value = null;
   newCategoryName.value = '';
 }
+
+// 全文搜索功能
+const isFullSearching = ref(false);
+
+async function performFullTextSearch() {
+  if (!noteStore.searchQuery || isFullSearching.value) return;
+  
+  isFullSearching.value = true;
+  try {
+    await noteStore.fullTextSearch(noteStore.searchQuery);
+  } catch (error) {
+    console.error('全文搜索失败:', error);
+  } finally {
+    isFullSearching.value = false;
+  }
+}
 </script>
 
 <template>
@@ -110,13 +126,24 @@ async function finishRename(category) {
     <div class="notes-list" ref="notesListRef">
       <!-- Search Results -->
       <div v-if="noteStore.searchQuery" class="search-results">
-        <NoteItem
-          v-for="noteTitle in noteStore.searchResults"
-          :key="noteTitle.id"
-          :note="noteTitle"
-          :selected="noteTitle.id === noteStore.selectedNote?.id"
-          @select="noteStore.handleSelectNote(noteTitle)"
-        />
+        <div class="search-info">
+          <p>找到 {{ noteStore.searchResults.length }} 个结果</p>
+          <button v-if="noteStore.searchQuery" class="full-search-btn" @click="performFullTextSearch">
+            全文搜索
+          </button>
+        </div>
+        
+        <!-- 搜索结果列表 -->
+        <div class="search-results-list">
+          <NoteItem
+            v-for="noteTitle in noteStore.searchResults"
+            :key="noteTitle.id"
+            :note="noteTitle"
+            :selected="noteTitle.id === noteStore.selectedNote?.id"
+            :search-query="noteStore.searchQuery"
+            @select="noteStore.handleSelectNote(noteTitle)"
+          />
+        </div>
       </div>
 
       <!-- Categories and Notes (original view) -->
@@ -207,21 +234,14 @@ async function finishRename(category) {
 
     <!-- Context Menu -->
     <div v-if="contextMenu.visible" class="category-menu" :style="{ top: contextMenu.top + 'px', left: contextMenu.left + 'px' }" @click.stop>
-      <button @click="startRename(contextMenu.category)">Rename</button>
-      <button @click="handleDeleteCategory(contextMenu.category)">Delete</button>
+      <button @click="startRename(contextMenu.category)">重命名</button>
+      <button @click="handleDeleteCategory(contextMenu.category)">删除</button>
     </div>
   </div>
 </template>
 
 <style scoped>
-/* Nord Theme Colors */
-:root {
-  --nord0: #2e3440; --nord1: #3b4252; --nord2: #434c5e; --nord3: #4c566a;
-  --nord4: #d8dee9; --nord5: #e5e9f0; --nord6: #eceff4;
-  --nord7: #8fbcbb; --nord8: #88c0d0; --nord9: #81a1c1; --nord10: #5e81ac;
-  --nord11: #bf616a; --nord12: #d08770; --nord13: #ebcb8b; --nord14: #a3be8c;
-  --nord15: #b48ead;
-}
+/* Sidebar 组件样式，使用全局定义的 Nord 主题颜色 */
 
 .sidebar {
   min-width: 280px;
@@ -274,7 +294,7 @@ async function finishRename(category) {
   border-color: var(--nord9);
   outline: 0;
   box-shadow: 0 0 0 3px rgba(129, 161, 193, 0.2);
-  background-color: white;
+  background-color: var(--nord6);
 }
 
 .header-controls {
@@ -379,15 +399,16 @@ async function finishRename(category) {
 
 .category-menu {
   position: fixed;
-  background-color: white;
-  border: 1px solid var(--nord5);
+  background-color: var(--nord5);
+  border: 1px solid var(--nord4);
   border-radius: 8px;
   z-index: 1000;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  box-shadow: var(--shadow-lg);
   padding: 0.5rem;
   min-width: 140px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 .category-menu button {
   background: none;
@@ -398,14 +419,15 @@ async function finishRename(category) {
   cursor: pointer;
   font-size: 0.9rem;
   border-radius: 6px;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 .category-menu button:hover {
-  background-color: var(--nord6);
+  background-color: var(--nord4);
 }
 
 .rename-input {
   flex-grow: 1;
-  background-color: white;
+  background-color: var(--nord6);
   border: 1px solid var(--nord9);
   color: var(--nord1);
   border-radius: 5px;
@@ -413,6 +435,7 @@ async function finishRename(category) {
   font-size: 1em;
   font-weight: 500;
   outline: none;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .category-drop-zone {
@@ -434,6 +457,42 @@ async function finishRename(category) {
   padding: 1em;
   text-align: center;
   color: var(--nord3);
+}
+
+.search-results-list {
+  /* 移除固定高度，使用自然滚动 */
+}
+
+.search-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  color: var(--nord3);
+  border-bottom: 1px solid var(--nord4);
+  margin-bottom: 0.5rem;
+}
+
+.full-search-btn {
+  background: none;
+  border: 1px solid var(--nord4);
+  color: var(--nord9);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.full-search-btn:hover {
+  background-color: var(--nord9);
+  color: var(--nord6);
+}
+
+.full-search-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* Mobile Styles */

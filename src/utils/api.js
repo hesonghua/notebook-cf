@@ -27,7 +27,9 @@ export async function getConfig() {
   if (!response.ok) {
     throw new Error('Failed to fetch config');
   }
-  return response.json();
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to fetch config');
+  return result.data;
 }
 
 export async function login(username, password, turnstileToken) {
@@ -59,7 +61,9 @@ export async function register(username, password, turnstileToken) {
 export async function getCategories() {
   const response = await fetchWithAuth('/api/categories');
   if (!response.ok) throw new Error('Failed to fetch categories');
-  return response.json();
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to fetch categories');
+  return result.data.categories;
 }
 
 export async function addCategory(category) {
@@ -90,11 +94,22 @@ export async function deleteCategory(id) {
 
 // --- Notes API ---
 
-export async function getNotes(categoryId) {
+export async function getNotes(categoryId, searchQuery) {
   let url = '/api/notes';
+  const params = new URLSearchParams();
+  
   if (categoryId) {
-    url += `?categoryId=${categoryId}`;
+    params.append('categoryId', categoryId);
   }
+  
+  if (searchQuery) {
+    params.append('search', searchQuery);
+  }
+  
+  if (params.toString()) {
+    url += `?${params.toString()}`;
+  }
+  
   const response = await fetchWithAuth(url);
   if (!response.ok) throw new Error('Failed to fetch notes');
   const result = await response.json();
@@ -151,6 +166,78 @@ export async function deleteNote(id) {
   if (!response.ok) throw new Error('Failed to delete note');
   const result = await response.json();
   if (!result.success) throw new Error(result.message || 'Failed to delete note');
+}
+
+// --- Tags API ---
+
+export async function getTags() {
+  const response = await fetchWithAuth('/api/tags');
+  if (!response.ok) throw new Error('Failed to fetch tags');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to fetch tags');
+  return result.data;
+}
+
+export async function addTag(tag) {
+  const response = await fetchWithAuth('/api/tags', {
+    method: 'POST',
+    body: JSON.stringify(tag),
+  });
+  if (!response.ok) throw new Error('Failed to add tag');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to add tag');
+  return result.data;
+}
+
+export async function updateTag(tag) {
+  const response = await fetchWithAuth(`/api/tags`, {
+    method: 'PUT',
+    body: JSON.stringify(tag),
+  });
+  if (!response.ok) throw new Error('Failed to update tag');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to update tag');
+  return result.data;
+}
+
+export async function deleteTag(id) {
+  const response = await fetchWithAuth(`/api/tags`, {
+    method: 'DELETE',
+    body: JSON.stringify({ id }),
+  });
+  if (!response.ok) throw new Error('Failed to delete tag');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to delete tag');
+}
+
+export async function getNoteTags(noteId) {
+  const response = await fetchWithAuth(`/api/note-tags?noteId=${noteId}`);
+  if (!response.ok) throw new Error('Failed to fetch note tags');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to fetch note tags');
+  return result.data;
+}
+
+export async function addNoteTag(noteId, tagId) {
+  const response = await fetchWithAuth('/api/note-tags', {
+    method: 'POST',
+    body: JSON.stringify({ noteId, tagId }),
+  });
+  if (!response.ok) throw new Error('Failed to add tag to note');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to add tag to note');
+  return result.data;
+}
+
+export async function removeNoteTag(noteId, tagId) {
+  const response = await fetchWithAuth('/api/note-tags', {
+    method: 'DELETE',
+    body: JSON.stringify({ noteId, tagId }),
+  });
+  if (!response.ok) throw new Error('Failed to remove tag from note');
+  const result = await response.json();
+  if (!result.success) throw new Error(result.message || 'Failed to remove tag from note');
+  return result.data;
 }
 
 // --- Image Upload API ---

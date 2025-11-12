@@ -8,9 +8,11 @@
 	},
 	"scripts": {
 		"dev": "vite",
+		"dev:local": "wrangler dev --config wrangler.dev.jsonc --local --persist-to ./.wrangler/state",
 		"build": "vite build",
 		"preview": "npm run build && wrangler dev",
-		"deploy": "npm run build && wrangler deploy"
+		"deploy": "npm run build && wrangler deploy",
+		"setup:dev": "chmod +x scripts/setup-dev.sh && ./scripts/setup-dev.sh"
 	},
 	"dependencies": {
 		"highlight.js": "^11.11.1",

@@ -51,8 +51,10 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
           </div>
-          <button v-if="noteStore.selectedNote" class="icon-btn save-btn" @click="saveCurrentNote" :disabled="!noteStore.selectedNote?.dirty" data-tooltip="保存 (Ctrl+S)">
+          <button v-if="noteStore.selectedNote" class="icon-btn save-btn" @click="saveCurrentNote" :disabled="!noteStore.selectedNote?.dirty || isAutoSaving" data-tooltip="保存 (Ctrl+S)">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+            <span v-if="isAutoSaving" class="auto-save-indicator">自动保存中...</span>
+            <span v-else-if="lastSaveTime && noteStore.selectedNote?.dirty === false" class="save-status">已保存</span>
           </button>
      
           <div v-if="noteStore.selectedNote && !isMobile" class="print-btn-container">
@@ -64,6 +66,13 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             </button>
           </div>
+          <button class="icon-btn theme-toggle-btn" @click="themeStore.toggleDarkMode" :data-tooltip="themeStore.isDarkMode ? '切换到亮色模式' : '切换到暗色模式'">
+            <svg v-if="themeStore.isDarkMode" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+            <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          </button>
+          <button v-if="noteStore.selectedNote" class="icon-btn tag-btn" @click="showTagManager = true" data-tooltip="管理标签">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+          </button>
           <button class="icon-btn logout-btn" @click="logout" data-tooltip="注销">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
           </button>
@@ -96,25 +105,43 @@
         <p>Select a note to view, or create a new one.</p>
       </div>
     </main>
+    
+    <!-- 标签管理弹窗 -->
+    <TagManager
+      v-if="showTagManager && noteStore.selectedNote"
+      :note-id="noteStore.selectedNote.id"
+      @close="showTagManager = false"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, inject } from 'vue';
+import { ref, onMounted, onBeforeUnmount, inject, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteStore } from '../stores/noteStore.js';
 import { useCategoryStore } from '../stores/categoryStore.js';
+import { useThemeStore } from '../stores/themeStore.js';
+import { useTagStore } from '../stores/tagStore.js';
 import { uploadImage } from '../utils/api.js';
 import Sidebar from './Sidebar.vue';
 import MarkdownPreview from './MarkdownPreview.vue';
+import TagManager from './TagManager.vue';
 
 const emitter = inject('emitter');
 const router = useRouter();
 const noteStore = useNoteStore();
 const categoryStore = useCategoryStore();
+const themeStore = useThemeStore();
+const tagStore = useTagStore();
 const editorRef = ref(null);
 const previewRef = ref(null);
 let isSyncing = false;
+
+// 自动保存相关
+const autoSaveTimer = ref(null);
+const AUTO_SAVE_DELAY = 2000; // 2秒后自动保存
+const lastSaveTime = ref(0);
+const isAutoSaving = ref(false);
 
 const sidebarWidth = ref(280);
 const isResizing = ref(false);
@@ -127,6 +154,10 @@ let isPrinting = false; // 添加一个标志位防止重复打印
 const isMobile = ref(false);
 const sidebarVisible = ref(false);
 const isSidebarCollapsed = ref(false);
+
+// 标签管理相关
+const showTagManager = ref(false);
+
 
 function toggleDesktopSidebar() {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -165,6 +196,77 @@ function setViewMode(mode) {
 
 function updateNoteContent(event) {
  noteStore.updateSelectedNoteContent(event.target.value);
+ triggerAutoSave();
+}
+
+// 自动保存相关函数
+function triggerAutoSave() {
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value);
+  }
+  
+  autoSaveTimer.value = setTimeout(async () => {
+    if (noteStore.selectedNote?.dirty && !isAutoSaving.value) {
+      await autoSaveNote();
+    }
+  }, AUTO_SAVE_DELAY);
+}
+
+async function autoSaveNote() {
+  if (!noteStore.selectedNote?.dirty || isAutoSaving.value) return;
+  
+  isAutoSaving.value = true;
+  let retryCount = 0;
+  const maxRetries = 3;
+  
+  while (retryCount < maxRetries) {
+    try {
+      await saveCurrentNote();
+      lastSaveTime.value = Date.now();
+      break; // 成功保存，退出重试循环
+    } catch (error) {
+      console.error(`自动保存失败 (尝试 ${retryCount + 1}/${maxRetries}):`, error);
+      retryCount++;
+      
+      if (retryCount >= maxRetries) {
+        // 显示错误提示
+        showSaveError('自动保存失败，请检查网络连接');
+      } else {
+        // 等待一段时间后重试
+        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+      }
+    }
+  }
+  
+  isAutoSaving.value = false;
+}
+
+// 显示保存错误提示
+function showSaveError(message) {
+  // 创建一个临时的错误提示元素
+  const errorDiv = document.createElement('div');
+  errorDiv.textContent = message;
+  errorDiv.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: var(--nord11);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    z-index: 10000;
+    box-shadow: var(--shadow-lg);
+    animation: slideIn 0.3s ease-out;
+  `;
+  
+  document.body.appendChild(errorDiv);
+  
+  // 3秒后自动移除
+  setTimeout(() => {
+    if (errorDiv.parentNode) {
+      errorDiv.parentNode.removeChild(errorDiv);
+    }
+  }, 3000);
 }
 
 function startResize(event) {
@@ -218,6 +320,7 @@ function handlePreviewScroll() {
 function saveCurrentNote() {
    if (noteStore.selectedNote && noteStore.selectedNote.dirty) {
        noteStore.saveNote(noteStore.selectedNote);
+       lastSaveTime.value = Date.now();
    }
 }
 
@@ -358,11 +461,11 @@ async function handleImageUpload(file) {
   }
 
   try {
-    // 在光标位置插入上传中的占位符（使用 data URI 避免触发网络请求）
+    // 在光标位置插入上传中的占位符（使用简单的文本避免浏览器兼容性问题）
     const textarea = editorRef.value;
     const cursorPos = textarea.selectionStart;
     const currentContent = noteStore.selectedNote.content;
-    const uploadingText = `![上传中...](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==)`;
+    const uploadingText = `![上传中...](${Date.now()}-uploading)`;
     
     const newContent =
       currentContent.substring(0, cursorPos) +
@@ -397,7 +500,7 @@ async function handleImageUpload(file) {
   } catch (error) {
     console.error('Upload error:', error);
     // 移除占位符
-    const uploadingPlaceholder = `![上传中...](data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMSIgaGVpZ2h0PSIxIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==)`;
+    const uploadingPlaceholder = uploadingText;
     const errorContent = noteStore.selectedNote.content.replace(uploadingPlaceholder, '');
     noteStore.updateSelectedNoteContent(errorContent);
     alert('图片上传失败: ' + error.message);
@@ -458,9 +561,18 @@ onMounted(() => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown);
   window.removeEventListener('resize', checkMobile);
-
   emitter.off('onAddNote');
+  
+  // 清理自动保存定时器
+  if (autoSaveTimer.value) {
+    clearTimeout(autoSaveTimer.value);
+  }
 });
+
+// 监听笔记变化，触发自动保存
+watch(() => noteStore.selectedNote?.content, () => {
+  triggerAutoSave();
+}, { deep: true });
 
 </script>
 
@@ -471,7 +583,6 @@ onBeforeUnmount(() => {
   position: relative;
   background-color: var(--nord6);
   color: var(--nord0);
-  transition: all 0.3s ease;
 }
 
 .container.sidebar-collapsed .sidebar {
@@ -497,7 +608,6 @@ onBeforeUnmount(() => {
   cursor: col-resize;
   background-color: var(--nord4);
   z-index: 10;
-  transition: background-color 0.2s ease;
 }
 
 .resizer:hover {
@@ -564,6 +674,10 @@ onBeforeUnmount(() => {
 
 .save-btn {
   color: var(--nord14); /* Green */
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 .save-btn:hover:not(:disabled) {
   background-color: rgba(163, 190, 140, 0.15);
@@ -575,12 +689,58 @@ onBeforeUnmount(() => {
   cursor: not-allowed;
 }
 
+.auto-save-indicator {
+  font-size: 0.8rem;
+  color: var(--nord9);
+  animation: pulse 1.5s infinite;
+}
+
+.save-status {
+  font-size: 0.8rem;
+  color: var(--nord14);
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
 .logout-btn {
   color: var(--nord11); /* Red */
 }
 .logout-btn:hover {
   background-color: rgba(191, 97, 106, 0.15);
   color: var(--nord11);
+}
+
+.theme-toggle-btn {
+  color: var(--nord3);
+}
+
+.theme-toggle-btn:hover {
+  background-color: var(--nord4);
+  color: var(--nord0);
+  transform: rotate(15deg);
+}
+
+
+.tag-btn {
+  color: var(--nord12);
+}
+
+.tag-btn:hover {
+  background-color: rgba(208, 135, 112, 0.15);
+  color: var(--nord12);
+}
+
+.export-btn {
+  color: var(--nord9);
+}
+
+.export-btn:hover {
+  background-color: rgba(129, 161, 193, 0.15);
+  color: var(--nord9);
 }
 
 .print-btn-container {
@@ -634,7 +794,7 @@ onBeforeUnmount(() => {
   line-height: 1.6;
   height: 100%;
   box-sizing: border-box;
-  background-color: #f8f9fa;
+  background-color: var(--nord6);
   color: var(--nord0);
   outline: none;
   overflow-y: auto;
@@ -678,5 +838,10 @@ onBeforeUnmount(() => {
   flex: 0 0 50%;
 }
 
+/* 深色模式下的编辑器样式 */
+.dark-mode .markdown-source {
+  background-color: var(--nord6);
+  color: var(--nord0);
+}
 
 </style>

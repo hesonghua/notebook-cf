@@ -197,22 +197,29 @@ marked.setOptions({
 let __mermaid = null
 const loadMermaid = async () => {
   if (!__mermaid) {
-    const mermaidModule = await import('mermaid')
-    __mermaid = mermaidModule.default
-    __mermaid.initialize({
-      startOnLoad: false,
-      // Mermaid 内置主题：
-      // 'default' - 默认主题，蓝色系，清晰易读
-      // 'forest' - 森林主题，绿色系
-      // 'dark' - 深色主题
-      // 'neutral' - 中性主题，灰色系
-      // 'base' - 基础主题，可自定义
-      theme: 'default',
-      // 可选：微调字体大小
-      themeVariables: {
-        fontSize: '16px',
-      },
-    })
+    try {
+      const mermaidModule = await import('mermaid')
+      __mermaid = mermaidModule.default
+      __mermaid.initialize({
+        startOnLoad: false,
+        // Mermaid 内置主题：
+        // 'default' - 默认主题，蓝色系，清晰易读
+        // 'forest' - 森林主题，绿色系
+        // 'dark' - 深色主题
+        // 'neutral' - 中性主题，灰色系
+        // 'base' - 基础主题，可自定义
+        theme: 'default',
+        // 可选：微调字体大小
+        themeVariables: {
+          fontSize: '16px',
+        },
+        // 添加错误处理
+        suppressErrorRendering: false,
+      })
+    } catch (error) {
+      console.error('Failed to load Mermaid:', error)
+      throw new Error('无法加载 Mermaid 图表库')
+    }
   }
   return __mermaid
 }
@@ -235,4 +242,9 @@ app.use(router)
 const configStore = useConfigStore()
 configStore.fetchConfig().then(() => {
   app.mount('body')
+}).catch(error => {
+  console.error('Failed to fetch config:', error)
+  // 即使配置获取失败，也挂载应用，但显示错误信息
+  app.mount('body')
+  // 可以在这里添加全局错误提示
 })

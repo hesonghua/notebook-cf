@@ -9,6 +9,7 @@
   font-size: 1rem;
   word-wrap: break-word;
   word-break: break-word;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .preview h1,
@@ -90,8 +91,8 @@
 }
 
 .preview pre {
-  background-color: #282c34;
-  color: #abb2bf;
+  background-color: #e6e8ea;
+  color: #24292e;
   padding: 1em;
   border-radius: 8px;
   overflow-x: auto;
@@ -101,6 +102,8 @@
   line-height: 1.4;
   max-width: 100%;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  border: 1px solid #c1c4c8;
 }
 
 .preview code {
@@ -113,6 +116,7 @@
   word-break: break-all;
   max-width: 100%;
   box-sizing: border-box;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .preview pre code {
@@ -211,4 +215,76 @@
 .preview .mermaid .labelText,
 .preview .mermaid text {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
+}
+
+/* 暗色模式样式 */
+.dark-mode .preview {
+  background-color: var(--nord6);
+  color: var(--nord1);
+}
+
+.dark-mode .preview h1,
+.dark-mode .preview h2,
+.dark-mode .preview h3,
+.dark-mode .preview h4,
+.dark-mode .preview h5,
+.dark-mode .preview h6 {
+  color: var(--nord1);
+  border-bottom-color: var(--nord4);
+}
+
+.dark-mode .preview blockquote {
+  background-color: var(--nord5);
+  color: var(--nord3);
+  border-left-color: var(--nord4);
+}
+
+.dark-mode .preview table th,
+.dark-mode .preview table td {
+  border-color: var(--nord4);
+}
+
+.dark-mode .preview table th {
+  background-color: var(--nord5);
+  color: var(--nord1);
+}
+
+.dark-mode .preview pre {
+  background-color: #3e424a;
+  color: #d8dee9;
+}
+
+.dark-mode .preview code {
+  background-color: var(--nord5);
+  color: var(--nord0);
+}
+
+.dark-mode .preview pre code {
+  background-color: transparent;
+}
+
+.dark-mode .preview .copy-button {
+  background: var(--nord3);
+  color: var(--nord6);
+}
+
+.dark-mode .preview .copy-button:hover {
+  background: var(--nord2);
+}
+
+.dark-mode .preview hr {
+  border-top-color: var(--nord4);
+}
+
+.dark-mode .preview a {
+  color: var(--nord8);
+}
+
+.dark-mode .preview a:hover {
+  color: var(--nord7);
+}
+
+.dark-mode .preview .mermaid {
+  border-color: var(--nord4);
+  background-color: transparent;
 }

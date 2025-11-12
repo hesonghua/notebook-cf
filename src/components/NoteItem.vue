@@ -11,6 +11,10 @@ const props = defineProps({
   selected: {
     type: Boolean,
     default: false
+  },
+  searchQuery: {
+    type: String,
+    default: ''
   }
 });
 
@@ -32,6 +36,16 @@ const otherCategories = computed(() => {
     categories.unshift({ id: null, name: '未分类' });
   }
   return categories;
+});
+
+// 计算高亮标题
+const highlightedTitle = computed(() => {
+  if (!props.searchQuery || !props.note.title) {
+    return props.note.title;
+  }
+  
+  const regex = new RegExp(`(${props.searchQuery})`, 'gi');
+  return props.note.title.replace(regex, '<mark>$1</mark>');
 });
 
 function showContextMenu(event) {
@@ -76,7 +90,7 @@ onBeforeUnmount(() => {
     @contextmenu.prevent="showContextMenu"
     :data-note-id="note.id"
   >
-    <span class="note-title">{{ note.title }}</span>
+    <span class="note-title" v-html="highlightedTitle"></span>
     <div class="note-actions">
       <span v-if="note.favorite" class="favorite-star">★</span>
     </div>
@@ -161,8 +175,8 @@ onBeforeUnmount(() => {
 
 .context-menu {
   position: fixed;
-  background: white;
-  border: 1px solid var(--nord5);
+  background: var(--nord6);
+  border: 1px solid var(--nord4);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   z-index: 1000;
   border-radius: 8px;
@@ -190,7 +204,7 @@ onBeforeUnmount(() => {
 }
 
 .context-menu li:hover {
-  background-color: var(--nord6);
+  background-color: var(--nord5);
 }
 
 .context-menu .separator {
@@ -214,8 +228,8 @@ onBeforeUnmount(() => {
   position: absolute;
   top: -0.5rem;
   left: 99%;
-  background: white;
-  border: 1px solid var(--nord5);
+  background: var(--nord6);
+  border: 1px solid var(--nord4);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   border-radius: 8px;
   padding: 0.5rem;
@@ -225,5 +239,19 @@ onBeforeUnmount(() => {
 
 .context-menu .has-submenu:hover .submenu {
   display: block;
+}
+
+/* 搜索高亮样式 */
+.note-title :deep(mark) {
+  background-color: var(--nord13);
+  color: var(--nord0);
+  padding: 0.1em 0.2em;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+.dark-mode .note-title :deep(mark) {
+  background-color: var(--nord13);
+  color: var(--nord6);
 }
 </style>

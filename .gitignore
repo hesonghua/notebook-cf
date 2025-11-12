@@ -37,3 +37,8 @@ coverage
 .env*
 !.env.example
 wrangler.jsonc
+
+# 本地开发环境文件
+.wrangler/state
+.dev.vars
+wrangler.dev.jsonc

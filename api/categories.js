@@ -17,14 +17,19 @@ async function categoriesHandler(request, env) {
           LEFT JOIN (
             SELECT category_id, COUNT(*) as note_count
             FROM notes
-            WHERE user_id = ?
+            WHERE user_id = ? AND category_id IS NOT NULL
             GROUP BY category_id
           ) n ON c.id = n.category_id
           WHERE c.user_id = ?
           ORDER BY c.id DESC
         `, [user.userId, user.userId]);
         
-        return Response.json(result.rows, { status: 200 });
+        return Response.json({
+          success: true,
+          data: {
+            categories: result.rows,
+          },
+        }, { status: 200 });
         
       } else if (request.method === 'POST') {
         const body = await parseRequestBody(request);

@@ -80,7 +80,12 @@ const processRenderedContent = async () => {
         div.innerHTML = svg
       } catch (e) {
         console.error('Mermaid 渲染错误:', e)
-        div.textContent = ''
+        // 显示错误信息而不是清空内容
+        div.innerHTML = `<div class="mermaid-error">图表渲染失败: ${e.message || '未知错误'}</div>`
+        div.style.border = '1px solid var(--nord11)'
+        div.style.padding = '1rem'
+        div.style.borderRadius = '4px'
+        div.style.backgroundColor = 'var(--nord6)'
       }
     })
   }

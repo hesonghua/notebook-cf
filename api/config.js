@@ -16,9 +16,10 @@ async function configHandler(request, env) {
     registerEnabled,
   };
 
-  return new Response(JSON.stringify(config), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return Response.json({
+    success: true,
+    data: config,
+  }, { status: 200 });
 }
 
 export default configHandler;

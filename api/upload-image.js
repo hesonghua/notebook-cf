@@ -58,7 +58,7 @@ async function uploadImageHandler(request, env) {
 
     // 生成公开访问 URL
     // 从环境变量获取 R2 公开 URL
-    const r2PublicUrl = env.R2_PUBLIC_URL || 'https://pub-xxxxx.r2.dev';
+    const r2PublicUrl = env.R2_PUBLIC_URL || 'http://localhost:8787';
     const imageUrl = `${r2PublicUrl}/${fileName}`;
 
     return Response.json({

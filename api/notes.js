@@ -9,7 +9,23 @@ async function notesHandler(request, env) {
     return await withDatabase(async (db) => {
       if (request.method === 'GET') {
         const query = parseQueryParams(request);
-        const { id, categoryId } = query;
+        const { id, categoryId, search } = query;
+        
+        // 如果有search参数，执行全文搜索
+        if (search) {
+          const searchQuery = `%${search}%`;
+          const result = await executeQuery(db,
+            'SELECT id, title, category_id, favorite, created_at FROM notes WHERE user_id = ? AND (title LIKE ? OR content LIKE ?) ORDER BY id DESC',
+            [user.userId, searchQuery, searchQuery]
+          );
+          
+          return Response.json({
+            success: true,
+            data: {
+              notes: result.rows,
+            },
+          }, { status: 200 });
+        }
         
         // 如果有id参数，返回单个笔记
         if (id) {
@@ -36,10 +52,12 @@ async function notesHandler(request, env) {
         const queryParams = [user.userId];
 
         if (categoryId) {
-          notesQuery += ' AND category_id = ?';
-          queryParams.push(categoryId);
-        } else if (categoryId === 'null') {
-          notesQuery += ' AND category_id IS NULL';
+          if (categoryId === 'null') {
+            notesQuery += ' AND category_id IS NULL';
+          } else {
+            notesQuery += ' AND category_id = ?';
+            queryParams.push(categoryId);
+          }
         }
         
         notesQuery += ' ORDER BY id DESC';
