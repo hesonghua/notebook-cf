@@ -15,7 +15,7 @@ async function notesHandler(request, env) {
         if (search) {
           const searchQuery = `%${search}%`;
           const result = await executeQuery(db,
-            'SELECT id, title, category_id, favorite, created_at FROM notes WHERE user_id = ? AND (title LIKE ? OR content LIKE ?) ORDER BY id DESC',
+            'SELECT id, title, category_id, created_at FROM notes WHERE user_id = ? AND (title LIKE ? OR content LIKE ?) ORDER BY id DESC',
             [user.userId, searchQuery, searchQuery]
           );
           
