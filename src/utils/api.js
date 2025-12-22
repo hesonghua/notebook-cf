@@ -131,7 +131,6 @@ export async function addNote(note) {
     body: JSON.stringify({
       title: note.title,
       content: note.content,
-      favorite: note.favorite,
       category_id: note.category_id,
     }),
   });
@@ -147,7 +146,6 @@ export async function updateNote(note) {
     body: JSON.stringify({
       title: note.title,
       content: note.content,
-      favorite: note.favorite,
       category_id: note.category_id,
       id: note.id,
     }),

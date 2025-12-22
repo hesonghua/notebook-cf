@@ -7,12 +7,11 @@ function getTitleFromContent(content) {
 }
 
 export class Note {
-  constructor({ id, title, content, category_id, favorite, created_at, dirty = false }) {
+  constructor({ id, title, content, category_id, created_at, dirty = false }) {
     this.id = id;
     this.title = title;
     this.content = content;
     this.category_id = category_id;
-    this.favorite = favorite;
     this.created_at = created_at;
     this.dirty = dirty;
 
@@ -51,7 +50,6 @@ export class Note {
       id: this.id,
       content: this.content,
       category_id: this.category_id,
-      favorite: this.favorite,
       title: getTitleFromContent(this.content),
     };
 

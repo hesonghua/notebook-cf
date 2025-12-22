@@ -116,7 +116,6 @@ export const useNoteStore = defineStore('notes', () => {
       title: 'New Note',
       content: '# New Note',
       category_id: null,
-      favorite: false,
       created_at: new Date().toISOString(),
       dirty: true,
     });

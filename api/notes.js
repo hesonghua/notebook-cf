@@ -48,7 +48,7 @@ async function notesHandler(request, env) {
         }
         
         // 否则返回笔记列表，不包含content
-        let notesQuery = 'SELECT id, title, category_id, favorite, created_at FROM notes WHERE user_id = ?';
+        let notesQuery = 'SELECT id, title, category_id, created_at FROM notes WHERE user_id = ?';
         const queryParams = [user.userId];
 
         if (categoryId) {
@@ -73,7 +73,7 @@ async function notesHandler(request, env) {
         
       } else if (request.method === 'POST') {
         const body = await parseRequestBody(request);
-        let { title, content, favorite = false, category_id = null } = body;
+        let { title, content, category_id = null } = body;
 
         if (!title) {
           if (!content) title = 'Untitled';
@@ -84,8 +84,8 @@ async function notesHandler(request, env) {
         }
         
         const result = await executeQuery(db,
-          'INSERT INTO notes (user_id, title, content, favorite, category_id) VALUES (?, ?, ?, ?, ?) RETURNING *',
-          [user.userId, title, content || '', favorite, category_id]
+          'INSERT INTO notes (user_id, title, content, category_id) VALUES (?, ?, ?, ?, ?) RETURNING *',
+          [user.userId, title, content || '', category_id]
         );
         
         return Response.json(

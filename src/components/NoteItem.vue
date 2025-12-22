@@ -91,10 +91,6 @@ onBeforeUnmount(() => {
     :data-note-id="note.id"
   >
     <span class="note-title" v-html="highlightedTitle"></span>
-    <div class="note-actions">
-      <span v-if="note.favorite" class="favorite-star">★</span>
-    </div>
-
     <div
       v-if="contextMenu.show"
       class="context-menu"
@@ -167,10 +163,6 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 0.5em;
-}
-
-.favorite-star {
-  color: var(--nord13);
 }
 
 .context-menu {
