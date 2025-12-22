@@ -131,7 +131,7 @@ onBeforeUnmount(() => {
 }
 
 .note-item {
-  padding: 0.6rem 0.75rem;
+  padding: 0.3rem 0.75rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -192,7 +192,7 @@ onBeforeUnmount(() => {
 }
 
 .context-menu li {
-  padding: 0.6rem 0.8rem;
+  padding: 0.3rem 0.8rem;
   cursor: pointer;
   border-radius: 6px;
   transition: background-color 0.2s ease;

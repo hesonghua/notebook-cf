@@ -348,7 +348,7 @@ async function performFullTextSearch() {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 0.5rem 0.75rem;
+  padding: 0.4rem 0.75rem;
   border-radius: 6px;
   font-weight: 500;
   color: var(--nord2);
@@ -439,7 +439,7 @@ async function performFullTextSearch() {
 }
 
 .category-drop-zone {
-  min-height: 10px;
+  min-height: 1px;
   border-radius: 6px;
   transition: background-color 0.2s;
   margin: 2px 0;
@@ -467,7 +467,7 @@ async function performFullTextSearch() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.5rem 0.75rem;
+  padding: 0.3rem 0.75rem;
   font-size: 0.9rem;
   color: var(--nord3);
   border-bottom: 1px solid var(--nord4);
