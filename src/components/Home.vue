@@ -51,12 +51,6 @@
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
           </div>
-          <button v-if="noteStore.selectedNote" class="icon-btn save-btn" @click="saveCurrentNote" :disabled="!noteStore.selectedNote?.dirty || isAutoSaving" data-tooltip="保存 (Ctrl+S)">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
-            <span v-if="isAutoSaving" class="auto-save-indicator">自动保存中...</span>
-            <span v-else-if="lastSaveTime && noteStore.selectedNote?.dirty === false" class="save-status">已保存</span>
-          </button>
-     
           <div v-if="noteStore.selectedNote && !isMobile" class="print-btn-container">
             <button 
               class="icon-btn" 
@@ -69,9 +63,6 @@
           <button class="icon-btn theme-toggle-btn" @click="themeStore.toggleDarkMode" :data-tooltip="themeStore.isDarkMode ? '切换到亮色模式' : '切换到暗色模式'">
             <svg v-if="themeStore.isDarkMode" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
             <svg v-else xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
-          </button>
-          <button v-if="noteStore.selectedNote" class="icon-btn tag-btn" @click="showTagManager = true" data-tooltip="管理标签">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
           </button>
           <button class="icon-btn logout-btn" @click="logout" data-tooltip="注销">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
@@ -105,13 +96,6 @@
         <p>Select a note to view, or create a new one.</p>
       </div>
     </main>
-    
-    <!-- 标签管理弹窗 -->
-    <TagManager
-      v-if="showTagManager && noteStore.selectedNote"
-      :note-id="noteStore.selectedNote.id"
-      @close="showTagManager = false"
-    />
   </div>
 </template>
 
@@ -121,18 +105,15 @@ import { useRouter } from 'vue-router';
 import { useNoteStore } from '../stores/noteStore.js';
 import { useCategoryStore } from '../stores/categoryStore.js';
 import { useThemeStore } from '../stores/themeStore.js';
-import { useTagStore } from '../stores/tagStore.js';
 import { uploadImage } from '../utils/api.js';
 import Sidebar from './Sidebar.vue';
 import MarkdownPreview from './MarkdownPreview.vue';
-import TagManager from './TagManager.vue';
 
 const emitter = inject('emitter');
 const router = useRouter();
 const noteStore = useNoteStore();
 const categoryStore = useCategoryStore();
 const themeStore = useThemeStore();
-const tagStore = useTagStore();
 const editorRef = ref(null);
 const previewRef = ref(null);
 let isSyncing = false;
@@ -154,10 +135,6 @@ let isPrinting = false; // 添加一个标志位防止重复打印
 const isMobile = ref(false);
 const sidebarVisible = ref(false);
 const isSidebarCollapsed = ref(false);
-
-// 标签管理相关
-const showTagManager = ref(false);
-
 
 function toggleDesktopSidebar() {
   isSidebarCollapsed.value = !isSidebarCollapsed.value;
@@ -722,25 +699,6 @@ watch(() => noteStore.selectedNote?.content, () => {
   background-color: var(--nord4);
   color: var(--nord0);
   transform: rotate(15deg);
-}
-
-
-.tag-btn {
-  color: var(--nord12);
-}
-
-.tag-btn:hover {
-  background-color: rgba(208, 135, 112, 0.15);
-  color: var(--nord12);
-}
-
-.export-btn {
-  color: var(--nord9);
-}
-
-.export-btn:hover {
-  background-color: rgba(129, 161, 193, 0.15);
-  color: var(--nord9);
 }
 
 .print-btn-container {

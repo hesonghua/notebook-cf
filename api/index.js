@@ -6,8 +6,6 @@ import notesHandler from './notes.js';
 import categoriesHandler from './categories.js';
 import configHandler from './config.js';
 import uploadImageHandler from './upload-image.js';
-import tagsHandler from './tags.js';
-import noteTagsHandler from './note-tags.js';
 
 const app = new Hono().basePath('/api');
 
@@ -36,8 +34,6 @@ app.all('/notes', createHandler(notesHandler));
 app.all('/categories', createHandler(categoriesHandler));
 app.all('/config', createHandler(configHandler));
 app.all('/upload-image', createHandler(uploadImageHandler));
-app.all('/tags', createHandler(tagsHandler));
-app.all('/note-tags', createHandler(noteTagsHandler));
 
 // 404 处理
 app.notFound((c) => {

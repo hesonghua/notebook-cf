@@ -3,13 +3,10 @@ import { onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNoteStore } from './stores/noteStore.js';
 import { useCategoryStore } from './stores/categoryStore.js';
-import { useTagStore } from './stores/tagStore.js';
-
 
 const router = useRouter();
 const noteStore = useNoteStore();
 const categoryStore = useCategoryStore();
-const tagStore = useTagStore();
 
 onMounted(() => {
   // 只在用户已登录时初始化
@@ -33,7 +30,6 @@ async function validateTokenAndInitialize(token) {
     // Token 有效，初始化数据
     noteStore.initializeNotes();
     categoryStore.fetchCategories();
-    tagStore.fetchTags();
   } catch (error) {
     console.error('Token validation failed:', error);
     // Token 无效，清除并重定向到登录页
@@ -47,7 +43,6 @@ watch(() => router.currentRoute.value.path, (newPath) => {
   if (newPath === '/' && localStorage.getItem('token')) {
     noteStore.initializeNotes();
     categoryStore.fetchCategories();
-    tagStore.fetchTags();
   }
 });
 </script>
