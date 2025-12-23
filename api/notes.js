@@ -84,7 +84,7 @@ async function notesHandler(request, env) {
         }
         
         const result = await executeQuery(db,
-          'INSERT INTO notes (user_id, title, content, category_id) VALUES (?, ?, ?, ?, ?) RETURNING *',
+          'INSERT INTO notes (user_id, title, content, category_id) VALUES (?, ?, ?, ?) RETURNING *',
           [user.userId, title, content || '', category_id]
         );
         
