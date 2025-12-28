@@ -56,6 +56,20 @@ export const useCategoryStore = defineStore('categories', () => {
     return null;
   }
 
+  // 查找父分类
+  function findParentCategory(categoriesList, childId) {
+    for (const category of categoriesList) {
+      if (category.children) {
+        if (category.children.some(child => child.id === childId)) {
+          return category;
+        }
+        const found = findParentCategory(category.children, childId);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
   // 递归删除分类
   function removeCategoryFromTree(categoriesList, id) {
     for (let i = 0; i < categoriesList.length; i++) {
@@ -85,6 +99,44 @@ export const useCategoryStore = defineStore('categories', () => {
     await category.rename(newName);
   }
 
+  async function moveCategory(sourceId, targetId) {
+    const sourceCategory = findCategoryById(categories.value, sourceId);
+    if (!sourceCategory) return;
+
+    // 检查是否移动到自己或自己的子分类中
+    if (sourceId === targetId) return;
+    const descendants = sourceCategory.getAllDescendants();
+    if (descendants.some(d => d.id === targetId)) {
+      console.warn("Cannot move category into its own descendant");
+      return;
+    }
+
+    await sourceCategory.moveTo(targetId);
+
+    // 更新本地树结构
+    // 1. 从旧父节点移除
+    const oldParent = findParentCategory(categories.value, sourceId);
+    if (oldParent) {
+      oldParent.removeChild(sourceId);
+    } else {
+      // 曾是顶层分类
+      const index = categories.value.findIndex(c => c.id === sourceId);
+      if (index !== -1) categories.value.splice(index, 1);
+    }
+
+    // 2. 添加到新父节点
+    if (targetId) {
+      const newParent = findCategoryById(categories.value, targetId);
+      if (newParent) {
+        newParent.addChild(sourceCategory);
+      }
+    } else {
+      // 移动到顶层
+      sourceCategory.parent_id = 0;
+      categories.value.push(sourceCategory);
+    }
+  }
+
   return {
     categories,
     isLoading,
@@ -93,5 +145,6 @@ export const useCategoryStore = defineStore('categories', () => {
     handleRenameCategory,
     deleteCategoryAndMoveNotes,
     findCategoryById,
+    moveCategory,
   };
 });

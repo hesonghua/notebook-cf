@@ -25,9 +25,7 @@ function loadExpandedPathIdsFromStorage() {
       const stored = localStorage.getItem('expandedPathIds');
       if (stored) {
         const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) {
-          expandedPathIds.value = parsed;
-        }
+        if (Array.isArray(parsed)) expandedPathIds.value = parsed;
       }
     }
   } catch (e) {
@@ -37,32 +35,17 @@ function loadExpandedPathIdsFromStorage() {
 
 loadExpandedPathIdsFromStorage();
 
-// 节点展开/折叠事件处理 - 使用路径ID
-// 注意：el-tree的@node-expand和@node-collapse事件直接传递节点数据对象，而非包装的node对象
+// 节点展开/折叠事件处理
 function onNodeExpand(data) {
-  if (!data) {
-    console.warn('[Sidebar] onNodeExpand: data is undefined', data);
-    return;
-  }
-  const pathId = data.pathId;
-  console.log('[Sidebar] onNodeExpand:', pathId, 'current expanded:', expandedPathIds.value);
-  if (pathId && !expandedPathIds.value.includes(pathId)) {
-    expandedPathIds.value.push(pathId);
+  if (data?.pathId && !expandedPathIds.value.includes(data.pathId)) {
+    expandedPathIds.value.push(data.pathId);
   }
 }
 
 function onNodeCollapse(data) {
-  if (!data) {
-    console.warn('[Sidebar] onNodeCollapse: data is undefined', data);
-    return;
-  }
-  const pathId = data.pathId;
-  console.log('[Sidebar] onNodeCollapse:', pathId, 'current expanded:', expandedPathIds.value);
-  if (pathId) {
-    const index = expandedPathIds.value.indexOf(pathId);
-    if (index !== -1) {
-      expandedPathIds.value.splice(index, 1);
-    }
+  if (data?.pathId) {
+    const index = expandedPathIds.value.indexOf(data.pathId);
+    if (index !== -1) expandedPathIds.value.splice(index, 1);
   }
 }
 
@@ -78,25 +61,65 @@ const contextMenu = ref({
 
 // 构建树形数据
 const treeData = computed(() => {
-  // 先缓存所有分类的日记总数，包含所有子分类日记数量
-  const getTotalNoteCount = (category) => {
+  // 递归计算分类下的日记总数
+  const getNoteCount = (category) => {
     let count = (noteStore.titlesByCategory[category.id]?.length || 0);
-    if (category.children && category.children.length > 0) {
-      category.children.forEach(child => {
-        count += getTotalNoteCount(child);
-      });
-    }
+    category.children?.forEach(child => count += getNoteCount(child));
     return count;
   };
 
-  const nodes = categoryStore.categories.map(category => {
-    const node = buildTreeNode(category, []);
-    // 使用递归计算的总日记数赋值给每个节点的 note_count
-    node.note_count = getTotalNoteCount(category);
+  // 递归构建树节点
+  const buildNode = (category, parentPath = []) => {
+    const currentPath = [...parentPath, category.id];
+    const pathId = currentPath.join('-');
+    
+    const children = [];
+    
+    // 添加子分类
+    if (category.children && category.children.length > 0) {
+      category.children.forEach(child => {
+        children.push(buildNode(child, currentPath));
+      });
+    }
+    
+    // 添加该分类的日记
+    const notes = noteStore.titlesByCategory[category.id] || [];
+    notes.forEach(note => {
+      children.push({
+        id: note.id,
+        title: note.title,
+        isNote: true,
+        categoryId: category.id,
+        pathId: `${pathId}-note-${note.id}`,
+      });
+    });
+    
+    // 如果没有子分类和日记，添加一个占位符以确保显示展开图标
+    if (children.length === 0) {
+      children.push({
+        id: `${category.id}-placeholder`,
+        title: '',
+        isPlaceholder: true,
+        categoryId: category.id,
+        pathId: `${pathId}-placeholder`,
+      });
+    }
+    
+    const node = {
+      id: category.id,
+      name: category.name,
+      note_count: getNoteCount(category),
+      isCategory: true,
+      pathId: pathId,
+      children: children,
+    };
+    
     return node;
-  });
+  };
 
-  // 添加未分类日记作为顶层节点
+  const nodes = categoryStore.categories.map(category => buildNode(category));
+
+  // 添加未分类日记
   noteStore.uncategorizedNoteTitles.forEach(note => {
     nodes.push({
       id: note.id,
@@ -104,50 +127,12 @@ const treeData = computed(() => {
       isNote: true,
       categoryId: null,
       isUncategorized: true,
-      pathId: `note-${note.id}`, // 未分类笔记的路径ID
+      pathId: `note-${note.id}`,
     });
   });
 
   return nodes;
 });
-
-// 构建带路径ID的树节点
-function buildTreeNode(category, parentPath = []) {
-  const currentPath = [...parentPath, category.id];
-  const pathId = currentPath.join('-');
-  
-  const node = {
-    id: category.id,
-    name: category.name,
-    note_count: category.note_count,
-    isCategory: true,
-    pathId: pathId,
-    children: [],
-  };
-  
-  // 添加子分类
-  if (category.children && category.children.length > 0) {
-    category.children.forEach(child => {
-      node.children.push(buildTreeNode(child, currentPath));
-    });
-  }
-  
-  // 添加该分类的日记作为子节点
-  const notes = noteStore.titlesByCategory[category.id];
-  if (notes && notes.length > 0) {
-    notes.forEach(note => {
-      node.children.push({
-        id: note.id,
-        title: note.title,
-        isNote: true,
-        categoryId: category.id,
-        pathId: `${pathId}-note-${note.id}`, // 笔记的路径ID
-      });
-    });
-  }
-  
-  return node;
-}
 
 onMounted(() => {
   document.addEventListener('click', hideContextMenu);
@@ -209,7 +194,7 @@ async function startRename() {
 async function finishRename() {
   if (editingCategoryId.value === null) return;
   
-  const originalCategory = findCategoryById(categoryStore.categories, editingCategoryId.value);
+  const originalCategory = categoryStore.findCategoryById(categoryStore.categories, editingCategoryId.value);
   if (!originalCategory) return;
   
   if (newCategoryName.value && newCategoryName.value !== originalCategory.name) {
@@ -241,7 +226,7 @@ async function handleDeleteCategory() {
   
   if (confirmed) {
     try {
-      const originalCategory = findCategoryById(categoryStore.categories, category.id);
+      const originalCategory = categoryStore.findCategoryById(categoryStore.categories, category.id);
       if (originalCategory) {
         await categoryStore.deleteCategoryAndMoveNotes(originalCategory);
         ElMessage.success('分类已删除');
@@ -267,17 +252,6 @@ watch(expandedPathIds, (newPathIds) => {
   }, 500);
 }, { deep: true });
 
-function findCategoryById(categoriesList, id) {
-  for (const cat of categoriesList) {
-    if (cat.id === id) return cat;
-    if (cat.children) {
-      const found = findCategoryById(cat.children, id);
-      if (found) return found;
-    }
-  }
-  return null;
-} 
-
 // 全文搜索功能
 const isFullSearching = ref(false); 
 
@@ -294,29 +268,13 @@ async function performFullTextSearch() {
   }
 }
 
-// 查找分类的父分类
-function findParentCategory(categoriesList, childId) {
-  for (const category of categoriesList) {
-    if (category.children) {
-      const foundInChildren = category.children.find(child => child.id === childId);
-      if (foundInChildren) return category;
-      
-      const found = findParentCategory(category.children, childId);
-      if (found) return found;
-    }
-  }
-  return null;
-}
-
 // 获取当前树中所有存在的路径ID
 function getAllPathIds(nodes) {
   const pathIds = new Set();
   function traverse(list) {
     if (!list) return;
     for (const node of list) {
-      if (node.pathId) {
-        pathIds.add(node.pathId);
-      }
+      if (node.pathId) pathIds.add(node.pathId);
       if (node.children) traverse(node.children);
     }
   }
@@ -326,93 +284,71 @@ function getAllPathIds(nodes) {
 
 // 基于路径ID的展开状态保存和恢复逻辑
 async function saveAndRestoreExpandedState(callback) {
-  // 保存当前展开状态（路径ID）
   const savedPathIds = [...expandedPathIds.value].filter(pathId => pathId && pathId.trim() !== '');
-  console.log('[Sidebar] 保存展开状态(路径ID):', savedPathIds);
-  
-  // 执行数据变更操作
   await callback();
-  
-  // 等待DOM更新
   await nextTick();
   await nextTick();
-  
-  // 获取新树中所有有效的路径ID
   const validPathIds = getAllPathIds(treeData.value);
-  
-  // 过滤出仍然存在的展开节点路径
-  const validExpandedPathIds = savedPathIds.filter(pathId => validPathIds.has(pathId));
-  
-  console.log('[Sidebar] 恢复展开状态(路径ID):', validExpandedPathIds);
-  
-  // 更新展开状态
-  expandedPathIds.value = validExpandedPathIds;
+  expandedPathIds.value = savedPathIds.filter(pathId => validPathIds.has(pathId));
 }
 
-// 处理拖拽笔记到分类
-async function handleDropOnCategory(event, targetCategoryId) {
+// 统一的拖拽处理逻辑
+async function handleDrop(event, targetType, targetId) {
   event.preventDefault();
   event.stopPropagation();
 
   const noteId = event.dataTransfer.getData('text/plain');
-  if (noteId) {
-    await saveAndRestoreExpandedState(async () => {
-      await noteStore.updateNoteCategory({
-        noteId: parseInt(noteId),
-        newCategoryId: targetCategoryId,
-        refreshCategories: false
-      });
-    });
-    return;
-  }
-
   const sourceCategoryId = event.dataTransfer.getData('category-id');
-  if (sourceCategoryId) {
-    const sourceId = parseInt(sourceCategoryId);
-    if (sourceId === targetCategoryId) return;
 
-    try {
-      await saveAndRestoreExpandedState(async () => {
-        const sourceCategory = findCategoryById(categoryStore.categories, sourceId);
-        if (!sourceCategory) return;
-        
-        await sourceCategory.moveTo(targetCategoryId);
-
-        const oldParent = findParentCategory(categoryStore.categories, sourceId);
-        if (oldParent) {
-          oldParent.removeChild(sourceId);
-        } else {
-          const index = categoryStore.categories.findIndex(c => c.id === sourceId);
-          if (index !== -1) {
-            categoryStore.categories.splice(index, 1);
-          }
+  await saveAndRestoreExpandedState(async () => {
+    if (noteId) {
+      // 移动笔记
+      const newCategoryId = targetType === 'category' ? targetId : (targetType === 'top' ? null : undefined);
+      // 如果是拖拽到另一个笔记上，targetId 是笔记ID，我们需要传入 categoryId
+      // 这里需要区分处理，或者在调用处传入正确的 categoryId
+      if (targetType === 'note') {
+         // 对于笔记到笔记的拖拽，targetId 是目标笔记ID，但我们需要的是目标分类ID
+         // 这里的 targetId 参数在 handleNoteDropOnNote 中实际上是 targetNoteId
+         // 所以我们需要第四个参数或者在调用时处理
+         // 为了简化，我们保持原有的调用方式，但在模板中直接调用 handleNoteDropOnNote
+      } else {
+         await noteStore.updateNoteCategory({
+          noteId: parseInt(noteId),
+          newCategoryId: newCategoryId,
+          refreshCategories: false
+        });
+      }
+    } else if (sourceCategoryId) {
+      // 移动分类
+      const sourceId = parseInt(sourceCategoryId);
+      const targetCatId = targetType === 'category' ? targetId : (targetType === 'top' ? 0 : null);
+      
+      if (targetCatId !== null && sourceId !== targetCatId) {
+        try {
+          await categoryStore.moveCategory(sourceId, targetCatId);
+          ElMessage.success(targetType === 'top' ? '分类已移至顶层' : '分类已移动');
+        } catch (error) {
+          ElMessage.error(error.message || '移动分类失败，请重试');
         }
-
-        const newParent = findCategoryById(categoryStore.categories, targetCategoryId);
-        if (newParent) {
-          newParent.addChild(sourceCategory);
-        }
-      });
-
-      ElMessage.success('分类已移动');
-    } catch (error) {
-      ElMessage.error(error.message || '移动分类失败，请重试');
+      }
     }
-  }
+  });
 }
 
-// 处理笔记开始拖拽
-function handleNoteStartDrag(event, noteId) {
-  event.dataTransfer.setData('text/plain', noteId.toString());
-  event.dataTransfer.effectAllowed = 'move';
+// 具体的拖拽处理函数，调用统一逻辑
+async function handleDropOnCategory(event, targetCategoryId) {
+  await handleDrop(event, 'category', targetCategoryId);
 }
 
-// 处理笔记拖拽到另一个笔记
+async function handleDropOnTopLevel(event) {
+  await handleDrop(event, 'top', null);
+}
+
 async function handleNoteDropOnNote(event, targetNoteId, categoryId) {
   event.preventDefault();
   event.stopPropagation();
-  
   const sourceNoteId = event.dataTransfer.getData('text/plain');
+  
   if (sourceNoteId && parseInt(sourceNoteId) !== targetNoteId) {
     await saveAndRestoreExpandedState(async () => {
       await noteStore.updateNoteCategory({
@@ -424,60 +360,16 @@ async function handleNoteDropOnNote(event, targetNoteId, categoryId) {
   }
 }
 
-// 处理拖拽到顶层
-async function handleDropOnTopLevel(event) {
-  event.preventDefault();
-  event.stopPropagation();
-
-  const noteId = event.dataTransfer.getData('text/plain');
-  if (noteId) {
-    await saveAndRestoreExpandedState(async () => {
-      await noteStore.updateNoteCategory({
-        noteId: parseInt(noteId),
-        newCategoryId: null,
-        refreshCategories: false
-      });
-    });
-    return;
-  }
-
-  const sourceCategoryId = event.dataTransfer.getData('category-id');
-  if (sourceCategoryId) {
-    const sourceId = parseInt(sourceCategoryId);
-    try {
-      await saveAndRestoreExpandedState(async () => {
-        const sourceCategory = findCategoryById(categoryStore.categories, sourceId);
-        if (!sourceCategory || sourceCategory.parent_id === 0) return;
-        
-        await sourceCategory.moveTo(0);
-
-        const oldParent = findParentCategory(categoryStore.categories, sourceId);
-        if (oldParent) {
-          oldParent.removeChild(sourceId);
-        } else {
-          return;
-        }
-
-        sourceCategory.parent_id = 0;
-        categoryStore.categories.push(sourceCategory);
-      });
-
-      ElMessage.success('分类已移至顶层');
-    } catch (error) {
-      ElMessage.error(error.message || '移动分类失败，请重试');
-    }
-  }
+function handleNoteStartDrag(event, noteId) {
+  event.dataTransfer.setData('text/plain', noteId.toString());
+  event.dataTransfer.effectAllowed = 'move';
 }
 
-// 从树中选择笔记
 function selectNoteFromTree(noteId) {
   const note = noteStore.notes.find(n => n.id === noteId);
-  if (note) {
-    noteStore.handleSelectNote(note);
-  }
+  if (note) noteStore.handleSelectNote(note);
 }
 
-// 处理分类开始拖拽
 function handleCategoryStartDrag(event, categoryId) {
   event.dataTransfer.setData('category-id', categoryId.toString());
   event.dataTransfer.effectAllowed = 'move';
@@ -539,14 +431,20 @@ function handleCategoryStartDrag(event, categoryId) {
             :expand-on-click-node="true"
             :default-expanded-keys="expandedPathIds"
             :highlight-current="false"
+            :show-checkbox="false"
+            :draggable="false"
+            :props="{ children: 'children', hasChildren: 'hasChildren' }"
             @node-contextmenu="showContextMenu"
             @node-expand="onNodeExpand"
             @node-collapse="onNodeCollapse"
           >
             <template #default="{ data, node }">
+              <!-- 隐藏占位符节点 -->
+              <div v-if="data.isPlaceholder" style="display: none;"></div>
+              
               <!-- 分类节点 -->
               <div
-                v-if="data.isCategory"
+                v-else-if="data.isCategory"
                 class="custom-tree-node"
                 draggable="true"
                 @dragstart="handleCategoryStartDrag($event, data.id)"
@@ -806,6 +704,11 @@ function handleCategoryStartDrag(event, categoryId) {
   margin: 0;
   padding-top: 0;
   display: block;
+}
+
+/* 隐藏占位符节点的整个行 */
+:deep(.el-tree-node[data-key*="-placeholder"]) {
+  display: none !important;
 }
 
 .custom-tree-node {
