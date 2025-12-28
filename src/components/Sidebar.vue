@@ -743,13 +743,8 @@ function handleCategoryStartDrag(event, categoryId) {
 
 /* 修正暗色模式下分类节点背景色，避免白色底 */
 .custom-tree-node {
-  background-color: var(--nord6);
   border-radius: 6px;
   transition: background-color 0.2s ease;
-}
-
-.custom-tree-node:hover {
-  background-color: var(--nord5);
 }
 
 /* 覆盖 el-tree 选中节点背景色，避免暗色模式下白底 */
@@ -832,14 +827,6 @@ function handleCategoryStartDrag(event, categoryId) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-
-  /* 选中时文字背景与边框背景保持一致 */
-}
-.custom-tree-node.is-selected > .category-content > .category-name {
-  background-color: var(--nord5);
-  padding: 0 0.25rem;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
 }
 
 .note-count {
