@@ -8,13 +8,14 @@
 	},
 	"scripts": {
 		"dev": "vite",
-		"dev:local": "wrangler dev --config wrangler.dev.jsonc --local --persist-to ./.wrangler/state",
+		"dev:local": "npm run build && wrangler dev --config wrangler.dev.jsonc --local --persist-to ./.wrangler/state",
 		"build": "vite build",
 		"preview": "npm run build && wrangler dev",
 		"deploy": "npm run build && wrangler deploy",
 		"setup:dev": "chmod +x scripts/setup-dev.sh && ./scripts/setup-dev.sh"
 	},
 	"dependencies": {
+		"element-plus": "^2.13.0",
 		"highlight.js": "^11.11.1",
 		"hono": "^4.9.9",
 		"katex": "^0.16.22",

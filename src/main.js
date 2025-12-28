@@ -5,6 +5,8 @@ import { marked } from 'marked'
 import { markedHighlight } from 'marked-highlight'
 import katex from 'katex'
 import hljs from 'highlight.js'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 import App from './App.vue'
 import router from './router'
 import './assets/main.css'
@@ -238,6 +240,7 @@ app.directive('focus', {
 
 app.use(createPinia())
 app.use(router)
+app.use(ElementPlus)
 
 const configStore = useConfigStore()
 configStore.fetchConfig().then(() => {

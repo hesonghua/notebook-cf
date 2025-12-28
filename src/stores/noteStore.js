@@ -177,11 +177,14 @@ export const useNoteStore = defineStore('notes', () => {
     }
   }
 
-  async function updateNoteCategory({ noteId, newCategoryId }) {
+  async function updateNoteCategory({ noteId, newCategoryId, refreshCategories = false }) {
     const note = notes.value.find(n => n.id === parseInt(noteId));
     if (note) {
       await note.updateCategory(newCategoryId);
-      getCategoryStore().fetchCategories();
+      // 只有明确要求时才刷新分类（例如通过 UI 操作时）
+      if (refreshCategories) {
+        getCategoryStore().fetchCategories();
+      }
     }
   }
 
@@ -265,6 +268,7 @@ export const useNoteStore = defineStore('notes', () => {
   });
 
   return {
+    notes,
     searchQuery,
     fullTextSearchResults,
     isLoading,

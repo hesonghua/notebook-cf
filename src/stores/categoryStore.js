@@ -23,23 +23,59 @@ export const useCategoryStore = defineStore('categories', () => {
     }
   }
 
-  async function handleAddCategory() {
+  async function handleAddCategory(parentId = null) {
     const name = prompt('Enter category name:');
     if (!name || name.trim() === '') return;
     try {
-      const newCategoryData = await addCategory({ name: name.trim() });
-      categories.value.push(new Category(newCategoryData));
+      const newCategoryData = await addCategory({ name: name.trim(), parent_id: parentId });
+      const newCategory = new Category(newCategoryData);
+      
+      if (parentId) {
+        // 查找父分类并添加子分类
+        const parent = findCategoryById(categories.value, parentId);
+        if (parent) {
+          parent.addChild(newCategory);
+        }
+      } else {
+        categories.value.push(newCategory);
+      }
     } catch (error) {
       console.error("Failed to add category:", error);
     }
   }
 
+  // 递归查找分类
+  function findCategoryById(categoriesList, id) {
+    for (const category of categoriesList) {
+      if (category.id === id) return category;
+      if (category.children && category.children.length > 0) {
+        const found = findCategoryById(category.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // 递归删除分类
+  function removeCategoryFromTree(categoriesList, id) {
+    for (let i = 0; i < categoriesList.length; i++) {
+      if (categoriesList[i].id === id) {
+        categoriesList.splice(i, 1);
+        return true;
+      }
+      if (categoriesList[i].children && categoriesList[i].children.length > 0) {
+        if (removeCategoryFromTree(categoriesList[i].children, id)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   async function deleteCategoryAndMoveNotes(category) {
-    const index = categories.value.findIndex(c => c.id === category.id);
-    if (index !== -1) {
+    const removed = removeCategoryFromTree(categories.value, category.id);
+    if (removed) {
       await category.deleteAndMoveNotes();
-      categories.value.splice(index, 1);
-  
       const noteStore = useNoteStore();
       await noteStore.forceRefreshNotes();
     }
@@ -56,5 +92,6 @@ export const useCategoryStore = defineStore('categories', () => {
     handleAddCategory,
     handleRenameCategory,
     deleteCategoryAndMoveNotes,
+    findCategoryById,
   };
 });

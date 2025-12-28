@@ -75,6 +75,15 @@ export async function addCategory(category) {
   return response.json();
 }
 
+export async function moveCategory(id, newParentId) {
+  const response = await fetchWithAuth('/api/categories/move', {
+    method: 'POST',
+    body: JSON.stringify({ id, parent_id: newParentId || 0 }),
+  });
+  if (!response.ok) throw new Error('Failed to move category');
+  return response.json();
+}
+
 export async function updateCategory(category) {
   const response = await fetchWithAuth(`/api/categories`, {
     method: 'PUT',
