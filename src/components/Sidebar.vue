@@ -394,6 +394,7 @@ function handleEscapeKey() {
         placeholder="搜索笔记..."
         v-model="noteStore.searchQuery"
         @keyup.esc="handleEscapeKey"
+        @keyup.enter="performFullTextSearch"
       />
     </div>
     <div class="notes-list" ref="notesListRef">
@@ -401,9 +402,9 @@ function handleEscapeKey() {
       <div v-if="noteStore.searchQuery" class="search-results">
         <div class="search-info">
           <p>找到 {{ noteStore.searchResults.length }} 个结果</p>
-          <button v-if="noteStore.searchQuery" class="full-search-btn" @click="performFullTextSearch">
+          <!-- <button v-if="noteStore.searchQuery" class="full-search-btn" @click="performFullTextSearch">
             全文搜索
-          </button>
+          </button> -->
         </div>
         
         <!-- 搜索结果列表 -->
