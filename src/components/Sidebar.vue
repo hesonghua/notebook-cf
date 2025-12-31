@@ -375,6 +375,14 @@ function handleCategoryStartDrag(event, categoryId) {
   event.dataTransfer.effectAllowed = 'move';
 }
 
+// ESC key handler to exit search mode
+function handleEscapeKey() {
+  // Only clear if there's an active search query
+  if (noteStore.searchQuery) {
+    noteStore.searchQuery = '';
+  }
+}
+
 </script> 
 
 <template>
@@ -385,6 +393,7 @@ function handleCategoryStartDrag(event, categoryId) {
         class="search-input"
         placeholder="搜索笔记..."
         v-model="noteStore.searchQuery"
+        @keyup.esc="handleEscapeKey"
       />
     </div>
     <div class="notes-list" ref="notesListRef">
