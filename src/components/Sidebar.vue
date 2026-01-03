@@ -18,23 +18,6 @@ const newCategoryName = ref('');
 // 使用路径ID管理展开状态
 const expandedPathIds = ref([]);
 
-// 简化的localStorage加载逻辑
-function loadExpandedPathIdsFromStorage() {
-  try {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('expandedPathIds');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (Array.isArray(parsed)) expandedPathIds.value = parsed;
-      }
-    }
-  } catch (e) {
-    console.warn('读取 expandedPathIds 本地存储失败', e);
-  }
-}
-
-loadExpandedPathIdsFromStorage();
-
 // 节点展开/折叠事件处理
 function onNodeExpand(data) {
   if (data?.pathId && !expandedPathIds.value.includes(data.pathId)) {
@@ -44,8 +27,7 @@ function onNodeExpand(data) {
 
 function onNodeCollapse(data) {
   if (data?.pathId) {
-    const index = expandedPathIds.value.indexOf(data.pathId);
-    if (index !== -1) expandedPathIds.value.splice(index, 1);
+    expandedPathIds.value = expandedPathIds.value.filter(pathId => !pathId.startsWith(data.pathId + "-") && pathId != data.pathId)
   }
 }
 
@@ -238,20 +220,6 @@ async function handleDeleteCategory() {
   }
 }
 
-// 简化的localStorage保存逻辑 - 节流500ms
-let saveTimeout = null;
-watch(expandedPathIds, (newPathIds) => {
-  if (typeof window === 'undefined') return;
-  if (saveTimeout) clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(() => {
-    try {
-      localStorage.setItem('expandedPathIds', JSON.stringify(newPathIds));
-    } catch (e) {
-      console.warn('保存 expandedPathIds 到 localStorage 失败:', e);
-    }
-  }, 500);
-}, { deep: true });
-
 // 全文搜索功能
 const isFullSearching = ref(false); 
 
@@ -268,30 +236,6 @@ async function performFullTextSearch() {
   }
 }
 
-// 获取当前树中所有存在的路径ID
-function getAllPathIds(nodes) {
-  const pathIds = new Set();
-  function traverse(list) {
-    if (!list) return;
-    for (const node of list) {
-      if (node.pathId) pathIds.add(node.pathId);
-      if (node.children) traverse(node.children);
-    }
-  }
-  traverse(nodes);
-  return pathIds;
-}
-
-// 基于路径ID的展开状态保存和恢复逻辑
-async function saveAndRestoreExpandedState(callback) {
-  const savedPathIds = [...expandedPathIds.value].filter(pathId => pathId && pathId.trim() !== '');
-  await callback();
-  await nextTick();
-  await nextTick();
-  const validPathIds = getAllPathIds(treeData.value);
-  expandedPathIds.value = savedPathIds.filter(pathId => validPathIds.has(pathId));
-}
-
 // 统一的拖拽处理逻辑
 async function handleDrop(event, targetType, targetId) {
   event.preventDefault();
@@ -300,39 +244,37 @@ async function handleDrop(event, targetType, targetId) {
   const noteId = event.dataTransfer.getData('text/plain');
   const sourceCategoryId = event.dataTransfer.getData('category-id');
 
-  await saveAndRestoreExpandedState(async () => {
-    if (noteId) {
-      // 移动笔记
-      const newCategoryId = targetType === 'category' ? targetId : (targetType === 'top' ? null : undefined);
-      // 如果是拖拽到另一个笔记上，targetId 是笔记ID，我们需要传入 categoryId
-      // 这里需要区分处理，或者在调用处传入正确的 categoryId
-      if (targetType === 'note') {
-         // 对于笔记到笔记的拖拽，targetId 是目标笔记ID，但我们需要的是目标分类ID
-         // 这里的 targetId 参数在 handleNoteDropOnNote 中实际上是 targetNoteId
-         // 所以我们需要第四个参数或者在调用时处理
-         // 为了简化，我们保持原有的调用方式，但在模板中直接调用 handleNoteDropOnNote
-      } else {
-         await noteStore.updateNoteCategory({
-          noteId: parseInt(noteId),
-          newCategoryId: newCategoryId,
-          refreshCategories: false
-        });
-      }
-    } else if (sourceCategoryId) {
-      // 移动分类
-      const sourceId = parseInt(sourceCategoryId);
-      const targetCatId = targetType === 'category' ? targetId : (targetType === 'top' ? 0 : null);
-      
-      if (targetCatId !== null && sourceId !== targetCatId) {
-        try {
-          await categoryStore.moveCategory(sourceId, targetCatId);
-          ElMessage.success(targetType === 'top' ? '分类已移至顶层' : '分类已移动');
-        } catch (error) {
-          ElMessage.error(error.message || '移动分类失败，请重试');
-        }
+  if (noteId) {
+    // 移动笔记
+    const newCategoryId = targetType === 'category' ? targetId : (targetType === 'top' ? null : undefined);
+    // 如果是拖拽到另一个笔记上，targetId 是笔记ID，我们需要传入 categoryId
+    // 这里需要区分处理，或者在调用处传入正确的 categoryId
+    if (targetType === 'note') {
+        // 对于笔记到笔记的拖拽，targetId 是目标笔记ID，但我们需要的是目标分类ID
+        // 这里的 targetId 参数在 handleNoteDropOnNote 中实际上是 targetNoteId
+        // 所以我们需要第四个参数或者在调用时处理
+        // 为了简化，我们保持原有的调用方式，但在模板中直接调用 handleNoteDropOnNote
+    } else {
+        await noteStore.updateNoteCategory({
+        noteId: parseInt(noteId),
+        newCategoryId: newCategoryId,
+        refreshCategories: false
+      });
+    }
+  } else if (sourceCategoryId) {
+    // 移动分类
+    const sourceId = parseInt(sourceCategoryId);
+    const targetCatId = targetType === 'category' ? targetId : (targetType === 'top' ? 0 : null);
+    
+    if (targetCatId !== null && sourceId !== targetCatId) {
+      try {
+        await categoryStore.moveCategory(sourceId, targetCatId);
+        ElMessage.success(targetType === 'top' ? '分类已移至顶层' : '分类已移动');
+      } catch (error) {
+        ElMessage.error(error.message || '移动分类失败，请重试');
       }
     }
-  });
+  }
 }
 
 // 具体的拖拽处理函数，调用统一逻辑
@@ -350,12 +292,10 @@ async function handleNoteDropOnNote(event, targetNoteId, categoryId) {
   const sourceNoteId = event.dataTransfer.getData('text/plain');
   
   if (sourceNoteId && parseInt(sourceNoteId) !== targetNoteId) {
-    await saveAndRestoreExpandedState(async () => {
-      await noteStore.updateNoteCategory({
-        noteId: parseInt(sourceNoteId),
-        newCategoryId: categoryId,
-        refreshCategories: false
-      });
+    await noteStore.updateNoteCategory({
+      noteId: parseInt(sourceNoteId),
+      newCategoryId: categoryId,
+      refreshCategories: false
     });
   }
 }
@@ -402,9 +342,6 @@ function handleEscapeKey() {
       <div v-if="noteStore.searchQuery" class="search-results">
         <div class="search-info">
           <p>找到 {{ noteStore.searchResults.length }} 个结果</p>
-          <!-- <button v-if="noteStore.searchQuery" class="full-search-btn" @click="performFullTextSearch">
-            全文搜索
-          </button> -->
         </div>
         
         <!-- 搜索结果列表 -->
@@ -423,15 +360,7 @@ function handleEscapeKey() {
       <!-- Categories and Notes (original view) -->
       <div v-else>
         <!-- 顶层拖拽区域 -->
-        <div
-          class="top-level-drop-zone"
-          @dragover.prevent
-          @dragenter="$event.currentTarget.classList.add('drag-over')"
-          @dragleave="$event.currentTarget.classList.remove('drag-over')"
-          @drop="handleDropOnTopLevel($event); $event.currentTarget.classList.remove('drag-over')"
-        >
-          拖拽到此处以移至顶层
-        </div>
+
         <!-- Category Tree using Element Plus el-tree -->
         <div class="category-tree">
           <el-tree
@@ -620,28 +549,6 @@ function handleEscapeKey() {
 /* Category Tree Styles */
 .category-tree {
   margin-bottom: 0.75rem;
-}
-
-/* 顶层拖拽区域 */
-.top-level-drop-zone {
-  min-height: 50px;
-  border: 2px dashed var(--nord4);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.75rem;
-  color: var(--nord3);
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-  cursor: default;
-}
-
-.top-level-drop-zone:hover,
-.top-level-drop-zone.drag-over {
-  background-color: var(--nord5);
-  border-color: var(--nord9);
-  color: var(--nord9);
 }
 
 :deep(.el-tree) {
@@ -842,10 +749,6 @@ function handleEscapeKey() {
   padding: 1em;
   text-align: center;
   color: var(--nord3);
-} 
-
-.search-results-list {
-  /* 移除固定高度，使用自然滚动 */
 } 
 
 .search-info {
