@@ -217,6 +217,11 @@
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
+/* 移除 Mermaid 节点的最大宽度限制，让文本不自动换行 */
+.preview .mermaid foreignObject div[style*="max-width"] {
+  max-width: none !important;
+}
+
 /* 暗色模式样式 */
 .dark-mode .preview {
   background-color: var(--nord6);

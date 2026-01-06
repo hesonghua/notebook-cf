@@ -66,28 +66,27 @@ const processRenderedContent = async () => {
   if (mermaidDivs.length > 0) {
     // 只有当页面中有 mermaid 图表时才加载 mermaid 库
     const mermaidInstance = await loadMermaid()
-    
-    mermaidDivs.forEach(async (div, i) => {
-      if (div.hasAttribute('data-mermaid-processed')) return
 
-      const id = `mermaid-svg-${Date.now()}-${i}`
-      const graphDefinition = div.textContent || ''
-      div.textContent = '' // 清空内容以防止未渲染代码闪烁
-      div.setAttribute('data-mermaid-processed', 'true')
-
-      try {
-        const { svg } = await mermaidInstance.render(id, graphDefinition)
-        div.innerHTML = svg
-      } catch (e) {
-        console.error('Mermaid 渲染错误:', e)
-        // 显示错误信息而不是清空内容
-        div.innerHTML = `<div class="mermaid-error">图表渲染失败: ${e.message || '未知错误'}</div>`
-        div.style.border = '1px solid var(--nord11)'
-        div.style.padding = '1rem'
-        div.style.borderRadius = '4px'
-        div.style.backgroundColor = 'var(--nord6)'
-      }
-    })
+    // 使用 mermaid.run() 方法，它对 HTML 标签支持更好
+    try {
+      await mermaidInstance.run({
+        nodes: Array.from(mermaidDivs).filter(div => !div.hasAttribute('data-mermaid-processed'))
+      })
+      // 标记为已处理
+      mermaidDivs.forEach(div => div.setAttribute('data-mermaid-processed', 'true'))
+    } catch (e) {
+      console.error('Mermaid 渲染错误:', e)
+      mermaidDivs.forEach(div => {
+        if (!div.hasAttribute('data-mermaid-processed')) {
+          div.innerHTML = `<div class="mermaid-error">图表渲染失败: ${e.message || '未知错误'}</div>`
+          div.style.border = '1px solid var(--nord11)'
+          div.style.padding = '1rem'
+          div.style.borderRadius = '4px'
+          div.style.backgroundColor = 'var(--nord6)'
+          div.setAttribute('data-mermaid-processed', 'true')
+        }
+      })
+    }
   }
 }
 </script>

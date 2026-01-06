@@ -211,6 +211,12 @@ const loadMermaid = async () => {
         // 'neutral' - 中性主题，灰色系
         // 'base' - 基础主题，可自定义
         theme: 'default',
+        // // 安全级别：'loose' 允许使用 HTML 标签（如 <br/>）实现换行
+        // securityLevel: 'loose',
+        // // Flowchart 配置：允许在节点标签中使用 HTML 标签
+        // flowchart: {
+        //   htmlLabels: true,
+        // },
         // 可选：微调字体大小
         themeVariables: {
           fontSize: '16px',
